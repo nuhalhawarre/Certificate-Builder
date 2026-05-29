@@ -1,0 +1,2075 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CertifyPro v3 — Professional Certificate Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Cinzel:wght@400..900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Great+Vibes&family=Lora:ital,wght@0,400;0,600;1,400;1,600&family=Montserrat:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600;700&family=Syncopate:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080a;
+  --surface:#111114;
+  --surface2:#18181c;
+  --surface3:#222228;
+  --border:rgba(255,255,255,0.06);
+  --border2:rgba(255,255,255,0.11);
+  --border3:rgba(255,255,255,0.22);
+  --text:#f0f0f2;
+  --text2:#8a8a95;
+  --text3:#3a3a42;
+  --blue:#3b82f6;
+  --blue2:rgba(59,130,246,0.12);
+  --green:#22c55e;
+  --amber:#f59e0b;
+  --red:#ef4444;
+  --gold:#c9a96e;
+  --r:8px;
+  --r2:12px;
+}
+html,body{height:100%;overflow:hidden;-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:10px}
+
+/* ─── LAYOUT ─── */
+.app{display:flex;flex-direction:column;height:100vh}
+.topbar{height:46px;display:flex;align-items:center;gap:0;padding:0 16px;background:rgba(8,8,10,0.95);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);flex-shrink:0;z-index:100;position:relative}
+.logo{font-size:14px;font-weight:600;letter-spacing:-0.02em;margin-right:16px;white-space:nowrap}
+.logo span{color:var(--text2);font-weight:400}
+.logo em{color:var(--blue);font-style:normal}
+
+.tab-bar{display:flex;gap:2px;background:rgba(0,0,0,0.5);border-radius:8px;padding:2px;margin-right:auto}
+.tab{padding:4px 13px;font-size:11.5px;font-weight:500;color:var(--text2);border-radius:6px;cursor:pointer;transition:all .2s;white-space:nowrap;border:none;background:none;font-family:inherit}
+.tab.active,.tab:hover{color:var(--text)}
+.tab.active{background:var(--surface3);box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+
+.topbar-actions{display:flex;align-items:center;gap:6px;margin-left:10px}
+.btn{padding:5px 12px;font-size:11px;font-weight:500;border-radius:var(--r);cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+.btn-ghost:hover{border-color:var(--border3);color:var(--text);background:rgba(255,255,255,0.04)}
+.btn-solid{background:var(--text);border:none;color:#000}
+.btn-solid:hover{opacity:0.88}
+.btn-blue{background:var(--blue);border:none;color:#fff}
+.btn-blue:hover{opacity:0.88}
+.btn-danger{background:transparent;border:1px solid rgba(239,68,68,0.2);color:var(--red)}
+.btn-danger:hover{background:rgba(239,68,68,0.08)}
+.btn-sm{padding:3px 9px;font-size:10.5px}
+.btn-icon{padding:5px;width:28px;height:28px;justify-content:center}
+.undo-redo{display:flex;gap:1px}
+
+.workspace{display:grid;grid-template-columns:300px 1fr 268px;flex:1;min-height:0;overflow:hidden}
+
+/* ─── PANELS ─── */
+.panel{background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.panel-r{background:var(--surface);border-left:1px solid var(--border);border-right:none;overflow-y:auto;display:flex;flex-direction:column}
+.psec{padding:14px 14px;border-bottom:1px solid var(--border)}
+.psec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;cursor:pointer;user-select:none}
+.psec-label{font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text2)}
+.psec-chevron{font-size:10px;color:var(--text3);transition:transform .2s}
+.psec-chevron.open{transform:rotate(180deg);color:var(--text2)}
+.psec-body{display:flex;flex-direction:column;gap:9px}
+.psec-body.collapsed{display:none}
+
+/* ─── FORM ELEMENTS ─── */
+.field{display:flex;flex-direction:column;gap:5px}
+.field label,.flabel{font-size:10.5px;color:var(--text2);font-weight:400}
+.inp{background:rgba(0,0,0,0.3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:inherit;font-size:11.5px;padding:7px 9px;outline:none;transition:border-color .2s;width:100%}
+.inp:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(59,130,246,0.15)}
+textarea.inp{resize:vertical;min-height:56px;line-height:1.5}
+select.inp{cursor:pointer}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.slider-row{display:flex;align-items:center;gap:9px}
+.slider-row input[type=range]{flex:1;-webkit-appearance:none;height:3px;background:var(--surface3);border-radius:2px;outline:none;padding:0;border:none}
+.slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.4)}
+.slider-val{font-size:10.5px;color:var(--text2);min-width:28px;text-align:right}
+.color-row{display:flex;align-items:center;gap:7px}
+.color-row input[type=color]{width:28px;height:28px;border:1px solid var(--border2);border-radius:6px;background:none;cursor:pointer;padding:0;outline:none}
+.color-hex{flex:1}
+
+/* ─── THEME PICKER ─── */
+.theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;max-height:320px;overflow-y:auto}
+.theme-card{padding:8px 10px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:8px}
+.theme-card:hover{border-color:var(--border2);background:rgba(255,255,255,0.04)}
+.theme-card.active{border-color:var(--blue);background:var(--blue2)}
+.theme-dot{width:28px;height:22px;border-radius:4px;flex-shrink:0;font-size:7px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;letter-spacing:.04em}
+.theme-name{font-size:11px;font-weight:500;color:var(--text)}
+.theme-sub{font-size:9px;color:var(--text2)}
+
+/* ─── FONT GRID ─── */
+.font-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;max-height:190px;overflow-y:auto}
+.font-btn{padding:7px 9px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .15s;text-align:left}
+.font-btn:hover{border-color:var(--border2)}
+.font-btn.active{border-color:var(--blue);background:var(--blue2)}
+.font-btn-name{font-size:12px;color:var(--text);margin-bottom:1px}
+.font-btn-lbl{font-size:8.5px;color:var(--text2);letter-spacing:.04em;text-transform:uppercase}
+
+/* ─── CANVAS ─── */
+.canvas-area{background:#050507;display:flex;flex-direction:column;align-items:center;padding:24px 20px;overflow:auto;gap:14px;position:relative}
+.canvas-toolbar{display:flex;align-items:center;gap:6px;width:100%;max-width:880px;flex-shrink:0}
+.canvas-info{flex:1;font-size:10.5px;color:var(--text2)}
+.zoom-ctrl{display:flex;align-items:center;gap:1px;background:var(--surface2);border-radius:6px;padding:2px}
+.zoom-btn{width:22px;height:22px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--text2);font-size:12px;border-radius:4px;cursor:pointer}
+.zoom-btn:hover{background:rgba(255,255,255,0.07);color:var(--text)}
+.zoom-val{font-size:10.5px;font-weight:500;color:var(--text2);min-width:34px;text-align:center}
+.cert-stage-wrap{position:relative}
+.cert-stage{transform-origin:top center;transition:transform .25s cubic-bezier(.25,.1,.25,1)}
+
+/* ─── CERT BASE ─── */
+#certificate{width:860px;min-height:608px;position:relative;overflow:hidden;cursor:default;box-shadow:0 24px 70px rgba(0,0,0,0.8)}
+.cert-bg-color{position:absolute;inset:0;z-index:1}
+.cert-bg-img{position:absolute;inset:0;background-size:cover;background-position:center;z-index:2}
+.cert-overlay{position:absolute;inset:0;z-index:3}
+.cert-wm{position:absolute;inset:0;z-index:95;pointer-events:none;background-repeat:repeat;display:none}
+.cert-content{position:relative;z-index:10;width:100%;min-height:608px}
+
+/* Drag handles */
+.draggable-element{transition: box-shadow 0.2s; border:1px dashed transparent}
+.draggable-element.drag-active-mode{cursor:move!important}
+.draggable-element.drag-active-mode:hover{border-color:var(--blue); box-shadow:0 0 0 2px rgba(59,130,246,0.2)}
+
+/* QR code */
+.cert-qr{position:absolute;z-index:20;background:rgba(255,255,255,0.92);padding:4px;border-radius:4px}
+.cert-qr canvas,.cert-qr img{display:block}
+
+/* ─── THEMES CONFIGURATION ─── */
+.t-bisnis .cert-bg-color{background:#0d1b3e}
+.t-bisnis .cert-overlay{background:radial-gradient(circle at 20% 50%,rgba(26,48,96,.8) 0%,transparent 70%),radial-gradient(circle at 80% 20%,rgba(201,169,110,.08) 0%,transparent 60%)}
+.t-bisnis{--ac:#c9a96e;--ac2:#e8d5a3;--tc:#f0eeea;--tc2:rgba(240,238,234,.65);--tc3:rgba(240,238,234,.32)}
+
+.t-elegance .cert-bg-color{background:#180e0e}
+.t-elegance .cert-overlay{background:radial-gradient(circle at 50% 50%,rgba(50,20,20,.8) 0%,transparent 80%)}
+.t-elegance{--ac:#d4a574;--ac2:#f5e6d6;--tc:#f5e6d6;--tc2:rgba(245,230,214,.65);--tc3:rgba(245,230,214,.32)}
+
+.t-modern .cert-bg-color{background:#060610}
+.t-modern .cert-overlay{background:radial-gradient(circle at 0% 100%,rgba(0,80,180,.2) 0%,transparent 60%),radial-gradient(circle at 100% 0%,rgba(0,180,160,.12) 0%,transparent 60%)}
+.t-modern{--ac:#00d4ff;--ac2:#00d4ff;--tc:#f0eeea;--tc2:rgba(240,238,234,.65);--tc3:rgba(240,238,234,.3)}
+
+.t-royal .cert-bg-color{background:#0c0920}
+.t-royal .cert-overlay{background:radial-gradient(circle at 50% 50%,rgba(38,24,100,.7) 0%,transparent 80%)}
+.t-royal{--ac:#f0c040;--ac2:#fff0a0;--tc:#f5f0e8;--tc2:rgba(245,240,232,.65);--tc3:rgba(245,240,232,.32)}
+
+.t-nature .cert-bg-color{background:#081408}
+.t-nature .cert-overlay{background:radial-gradient(circle at 50% 50%,rgba(12,35,12,.85) 0%,transparent 85%)}
+.t-nature{--ac:#7ecb7e;--ac2:#b6e8b6;--tc:#e8f5e8;--tc2:rgba(232,245,232,.65);--tc3:rgba(232,245,232,.32)}
+
+.t-minimal .cert-bg-color{background:#f8f8f5}
+.t-minimal{--ac:#5a5a4a;--ac2:#1a1a16;--tc:#1a1a16;--tc2:rgba(26,26,22,.65);--tc3:rgba(26,26,22,.35)}
+
+.t-ai .cert-bg-color{background:#0d041a}
+.t-ai .cert-overlay{background:radial-gradient(circle at 50% 30%,rgba(139,92,246,.25) 0%,transparent 65%),radial-gradient(circle at 80% 80%,rgba(217,70,239,.15) 0%,transparent 50%)}
+.t-ai{--ac:#d946ef;--ac2:#e879f9;--tc:#fff;--tc2:rgba(240,230,255,.65);--tc3:rgba(240,230,255,.32)}
+
+.t-data .cert-bg-color{background:#020b14}
+.t-data .cert-overlay{background:radial-gradient(circle at 80% 40%,rgba(20,184,166,.18) 0%,transparent 60%)}
+.t-data{--ac:#14b8a6;--ac2:#2dd4bf;--tc:#e2e8f0;--tc2:rgba(226,232,240,.65);--tc3:rgba(226,232,240,.3)}
+
+.t-fintech .cert-bg-color{background:#021a14}
+.t-fintech .cert-overlay{background:radial-gradient(circle at 50% 50%,rgba(5,150,105,.2) 0%,transparent 75%)}
+.t-fintech{--ac:#10b981;--ac2:#34d399;--tc:#f0fdf4;--tc2:rgba(167,243,208,.65);--tc3:rgba(167,243,208,.32)}
+
+.t-cyber .cert-bg-color{background:#0b0c10}
+.t-cyber .cert-overlay{background:radial-gradient(circle at 15% 15%,rgba(239,68,68,.12) 0%,transparent 55%)}
+.t-cyber{--ac:#ef4444;--ac2:#f87171;--tc:#f8fafc;--tc2:#94a3b8;--tc3:rgba(148,163,184,.4)}
+
+.t-creative .cert-bg-color{background:#1a0a0d}
+.t-creative .cert-overlay{background:radial-gradient(circle at 80% 20%,rgba(244,63,94,.18) 0%,transparent 60%),radial-gradient(circle at 20% 80%,rgba(249,115,22,.12) 0%,transparent 50%)}
+.t-creative{--ac:#f43f5e;--ac2:#fb923c;--tc:#fff1f2;--tc2:rgba(255,228,230,.65);--tc3:rgba(255,228,230,.32)}
+
+.t-omni .cert-bg-color{background:#24110c}
+.t-omni .cert-overlay{background:radial-gradient(circle at 50% 50%,rgba(234,179,8,.06) 0%,transparent 75%)}
+.t-omni{--ac:#dd6b20;--ac2:#f6ad55;--tc:#fffff0;--tc2:rgba(255,255,240,.65);--tc3:rgba(255,255,240,.32)}
+
+/* ─── CERT LAYOUT STANDARD ─── */
+.cert-layout{padding:54px 74px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:11px;min-height:608px;box-sizing:border-box;position:relative;z-index:10}
+.cert-layout.left-align{align-items:flex-start;text-align:left;padding-left:90px}
+.c-org{font-size:10.5px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--ac)}
+.c-rule{width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--ac),transparent);margin:2px auto}
+.c-rule.left{margin:2px 0;background:linear-gradient(90deg,var(--ac),transparent)}
+.c-type-wrap{display:flex;flex-direction:column;align-items:center;gap:3px}
+.c-type-wrap.left{align-items:flex-start}
+.c-type{font-size:42px;font-weight:700;color:var(--tc);letter-spacing:.04em;line-height:1.1}
+.c-sub{font-size:9.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--tc3)}
+.c-divider{display:flex;align-items:center;gap:10px;width:100%;max-width:360px;justify-content:center;color:var(--ac);font-size:10px;opacity:0.5}
+.c-divider.left{justify-content:flex-start;max-width:200px}
+.c-presented{font-size:12px;color:var(--tc2);letter-spacing:.06em;font-style:italic}
+.c-name{font-size:48px;font-weight:300;color:var(--tc);line-height:1.15;margin:4px 0}
+.c-desc{font-size:12px;color:var(--tc2);max-width:510px;line-height:1.8}
+.c-course-wrap{display:flex;justify-content:center;width:100%}
+.c-course-wrap.left{justify-content:flex-start}
+.c-course{font-size:18px;font-weight:600;color:var(--ac2);letter-spacing:0.02em}
+.c-cert-no{font-size:9.5px;color:var(--tc3);letter-spacing:.12em;margin-top:1px}
+
+/* Footer */
+.c-footer{display:flex;align-items:flex-end;justify-content:space-between;width:100%;margin-top:auto;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08)}
+.t-minimal .c-footer{border-top-color:rgba(26,26,22,.12)}
+.c-sign-block{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:140px}
+.sign-img{max-height:40px;max-width:120px;object-fit:contain;margin-bottom:-2px}
+.sign-line{width:120px;height:.5px;background:rgba(255,255,255,0.25)}
+.t-minimal .sign-line{background:rgba(26,26,22,.2)}
+.c-sign-name{font-size:11px;font-weight:500;color:var(--tc);letter-spacing:.04em;text-align:center}
+.c-sign-role{font-size:9px;color:var(--tc3);letter-spacing:.04em}
+.c-seal{width:66px;height:66px;border:1.5px solid;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7.5px;font-weight:700;letter-spacing:.06em;text-align:center;line-height:1.4;position:relative;color:var(--ac);border-color:var(--ac);flex-shrink:0;margin:0 10px}
+.c-seal::before{content:'';position:absolute;inset:4px;border:.5px solid;border-radius:50%;border-color:inherit;opacity:.4}
+.c-date-block{text-align:right}
+.c-date-lbl{font-size:8.5px;display:block;margin-bottom:2px;color:var(--tc3);letter-spacing:.1em;text-transform:uppercase}
+.c-date-val{font-size:11.5px;font-weight:500;display:block;color:var(--tc2)}
+.c-logo-wrap{height:44px;display:flex;align-items:center;justify-content:center;margin-bottom:2px}
+.c-logo-wrap.left{justify-content:flex-start}
+.c-logo-wrap img{height:100%;max-width:140px;object-fit:contain}
+
+/* Decorations */
+.deco-border{position:absolute;inset:18px;border:1px solid;border-color:var(--ac);opacity:.28;pointer-events:none;z-index:5}
+.deco-border-inner{position:absolute;inset:25px;border:.5px solid;border-color:var(--ac);opacity:.12;pointer-events:none;z-index:5}
+.deco-corners .dc{position:absolute;width:34px;height:34px;border-color:var(--ac);border-style:solid;opacity:.65;z-index:6;pointer-events:none}
+.deco-corners .dc-tl{top:12px;left:12px;border-width:2px 0 0 2px}
+.deco-corners .dc-tr{top:12px;right:12px;border-width:2px 2px 0 0}
+.deco-corners .dc-bl{bottom:12px;left:12px;border-width:0 0 2px 2px}
+.deco-corners .dc-br{bottom:12px;right:12px;border-width:0 2px 2px 0}
+.deco-accent-bar{position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,transparent 0%,var(--ac) 30%,var(--ac2,#3b82f6) 70%,transparent 100%);z-index:6}
+
+/* LAYER PANEL ELEMENTS */
+.layer-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all .15s;margin-bottom:4px;user-select:none}
+.layer-item:hover{background:rgba(255,255,255,.05);border-color:var(--border2)}
+.layer-item.active-layer{border-color:var(--blue);background:var(--blue2)}
+.layer-icon{font-size:13px;color:var(--text2);min-width:16px;text-align:center}
+.layer-name{flex:1;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.layer-vis{background:none;border:none;color:var(--text2);cursor:pointer;font-size:12px;padding:2px 4px;line-height:1}
+.layer-vis:hover{color:var(--text)}
+
+/* BULK TABLE PREVIEW */
+.bulk-table-container{max-height:130px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;background:rgba(0,0,0,0.2);margin-top:5px}
+
+/* OTHER ADAPTIVE FIXES */
+.color-elements-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ce-item{display:flex;flex-direction:column;gap:4px;padding:8px;background:rgba(0,0,0,0.2);border:1px solid var(--border);border-radius:var(--r)}
+.ce-label{font-size:9.5px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
+.ce-color-row{display:flex;align-items:center;gap:5px}
+.ce-color-row input[type=color]{width:22px;height:22px;border:1px solid var(--border2);border-radius:4px;background:none;cursor:pointer;padding:0;outline:none}
+.ce-hex{flex:1;font-size:10.5px;padding:4px 7px}
+
+.upload-zone{border:1px dashed var(--border3);border-radius:var(--r);padding:16px;background:rgba(255,255,255,.01);text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone:hover{background:rgba(255,255,255,.03);border-color:var(--text2)}
+.upload-zone input{display:none}
+.uz-icon{font-size:18px;margin-bottom:3px;opacity:.5}
+.uz-text{font-size:10.5px;color:var(--text2);line-height:1.4}
+.uz-text strong{display:block;color:var(--text);font-weight:500;font-size:11.5px;margin-bottom:1px}
+
+.tpl-list{display:flex;flex-direction:column;gap:5px;max-height:180px;overflow-y:auto}
+.tpl-item{display:flex;align-items:center;gap:7px;padding:7px 9px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .15s}
+.tpl-item:hover{background:rgba(255,255,255,.04);border-color:var(--border2)}
+.tpl-item-name{flex:1;font-size:11.5px;color:var(--text)}
+.tpl-item-date{font-size:9.5px;color:var(--text2)}
+.tpl-item-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 2px;transition:color .15s}
+.tpl-item-del:hover{color:var(--red)}
+.tpl-save-row{display:flex;gap:5px}
+.tpl-save-row .inp{font-size:11px}
+
+.bulk-status{font-size:11px;color:var(--text2);padding:8px 10px;background:rgba(0,0,0,.2);border-radius:var(--r);border:1px solid var(--border);line-height:1.5}
+.bulk-progress{height:3px;background:var(--surface3);border-radius:2px;overflow:hidden;margin-top:8px}
+.bulk-progress-inner{height:100%;background:var(--blue);border-radius:2px;width:0;transition:width 0.3s}
+.bulk-preview-table{width:100%;font-size:10px;border-collapse:collapse}
+.bulk-preview-table th,.bulk-preview-table td{padding:4px 6px;border:1px solid var(--border);text-align:left;white-space:nowrap}
+.bulk-preview-table th{background:rgba(255,255,255,.03);color:var(--text2);font-weight:500}
+
+.ai-prompt-area{background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:var(--r);padding:9px;font-size:11px;color:var(--text2);line-height:1.5;min-height:70px;word-break:break-word}
+.ai-thinking{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--blue)}
+.ai-dot{width:5px;height:5px;border-radius:50%;background:var(--blue);animation:aipulse 1.2s infinite}
+.ai-dot:nth-child(2){animation-delay:.2s}
+.ai-dot:nth-child(3){animation-delay:.4s}
+@keyframes aipulse{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+.info-key{font-size:10.5px;color:var(--text2)}
+.info-val{font-size:10.5px;font-weight:500;color:var(--text)}
+.badge{display:inline-flex;align-items:center;padding:1px 7px;border-radius:10px;font-size:9px;font-weight:600;letter-spacing:.04em}
+.badge-green{background:rgba(34,197,94,.12);color:#22c55e}
+.badge-blue{background:rgba(59,130,246,.12);color:#3b82f6}
+
+.statusbar{height:22px;display:flex;align-items:center;padding:0 14px;gap:14px;background:#000;border-top:1px solid var(--border);flex-shrink:0}
+.sb-item{font-size:9.5px;color:var(--text2);font-family:'IBM Plex Mono',monospace}
+.sb-dot{width:4px;height:4px;border-radius:50%;background:var(--green)}
+
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(16px);opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.show{opacity:1;pointer-events:all}
+.overlay-box{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r2);padding:22px 32px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;min-width:220px}
+.spinner{width:22px;height:22px;border:2px solid var(--border);border-top-color:var(--text);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.overlay-title{font-size:13px;font-weight:500}
+.overlay-sub{font-size:11px;color:var(--text2)}
+
+.toast{position:fixed;bottom:20px;right:20px;background:rgba(24,24,28,.95);border:1px solid var(--border2);border-radius:var(--r);padding:9px 16px;font-size:11.5px;color:var(--text);transform:translateY(12px);opacity:0;transition:all .3s cubic-bezier(.25,.1,.25,1);z-index:9998;display:flex;align-items:center;gap:7px;backdrop-filter:blur(12px);box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-ico{font-size:13px}
+.toast-ico.ok{color:var(--green)}
+.toast-ico.err{color:var(--red)}
+.toast-ico.info{color:var(--blue)}
+
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:3px 0}
+.toggle-label{font-size:11.5px;color:var(--text2)}
+.toggle{position:relative;width:32px;height:18px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-track{position:absolute;inset:0;background:var(--surface3);border-radius:10px;transition:.2s;cursor:pointer;border:1px solid var(--border2)}
+.toggle input:checked+.toggle-track{background:var(--blue);border-color:var(--blue)}
+.toggle-track::after{content:'';position:absolute;width:12px;height:12px;border-radius:50%;background:#fff;top:2px;left:2px;transition:.2s}
+.toggle input:checked+.toggle-track::after{left:16px}
+.cb-row{display:flex;align-items:center;gap:8px;cursor:pointer}
+.cb-row input[type=checkbox]{width:13px;height:13px;accent-color:var(--blue);cursor:pointer}
+.cb-label{font-size:11.5px;color:var(--text2)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="topbar">
+  <div class="logo">Certify<span>Pro</span> <em>v3</em></div>
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('design',this)">Desain</button>
+    <button class="tab" onclick="switchTab('content',this)">Konten</button>
+    <button class="tab" onclick="switchTab('background',this)">Background</button>
+    <button class="tab" onclick="switchTab('typography',this)">Tipografi</button>
+    <button class="tab" onclick="switchTab('colors',this)">Warna</button>
+    <button class="tab" onclick="switchTab('bulk',this)">Bulk 📦</button>
+    <button class="tab" onclick="switchTab('ai',this)">AI ✨</button>
+    <button class="tab" onclick="switchTab('layers',this)">Layer</button>
+  </div>
+  <div class="topbar-actions">
+    <div class="undo-redo">
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="undo()" title="Undo (Ctrl+Z)">↩</button>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="redo()" title="Redo (Ctrl+Y)">↪</button>
+    </div>
+    <button class="btn btn-danger btn-sm" onclick="resetAll()">Reset</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportAs('jpg')">JPG</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportAs('png')">PNG</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportAs('pdf')">PDF</button>
+    <button class="btn btn-blue btn-sm" onclick="renderCert();toast('✓ Sertifikat diperbarui','ok')">Terapkan</button>
+  </div>
+</div>
+
+<div class="workspace">
+
+<div class="panel" id="left-panel">
+
+  <div id="tab-design" class="tab-pane">
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Tema</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <div class="theme-grid" id="theme-grid"></div>
+      </div>
+    </div>
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Format Kanvas</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <div class="field"><label>Ukuran</label>
+          <select class="inp" id="inp-format" onchange="updateFormat()">
+            <option value="landscape">Landscape A4 — 860×608</option>
+            <option value="portrait">Portrait A4 — 608×860</option>
+            <option value="square">Square — 720×720</option>
+          </select>
+        </div>
+        <div class="field"><label>Orientasi Konten</label>
+          <select class="inp" id="inp-layout" onchange="renderCert()">
+            <option value="center">Center Axis</option>
+            <option value="left">Left Align (Tema Modern)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Ornamen Dekoratif</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <label class="cb-row"><input type="checkbox" id="opt-border" checked onchange="renderCert()"><span class="cb-label">Border Frame</span></label>
+        <label class="cb-row"><input type="checkbox" id="opt-corners" checked onchange="renderCert()"><span class="cb-label">Sudut Ornamen</span></label>
+        <label class="cb-row"><input type="checkbox" id="opt-inner-border" onchange="renderCert()"><span class="cb-label">Inner Border</span></label>
+        <label class="cb-row"><input type="checkbox" id="opt-accent-bar" onchange="renderCert()"><span class="cb-label">Accent Bar Kiri</span></label>
+        <label class="cb-row"><input type="checkbox" id="opt-svg-ornament" checked onchange="renderCert()"><span class="cb-label">SVG Ornament Latar</span></label>
+        <div class="field" id="ornament-style-field">
+          <label>Gaya Ornamen</label>
+          <select class="inp" id="inp-ornament-style" onchange="renderCert()">
+            <option value="flourish">Baroque Flourish</option>
+            <option value="geometric">Geometric Grid</option>
+            <option value="hex">Hexagon Pattern</option>
+            <option value="waves">Wave Lines</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Template Tersimpan</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <div class="tpl-list" id="tpl-list"></div>
+        <div class="tpl-save-row" style="margin-top:4px">
+          <input class="inp" id="tpl-name-inp" placeholder="Nama template..." style="flex:1;font-size:11px"/>
+          <button class="btn btn-blue btn-sm" onclick="saveTemplate()">Simpan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-content" class="tab-pane" style="display:none">
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Identitas Penerima</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <div class="field"><label>Nama Lengkap</label><input class="inp" id="inp-name" value="Ahmad Fauzi Pratama" oninput="liveUpdate()"/></div>
+        <div class="field"><label>Jenis Sertifikat</label>
+          <select class="inp" id="inp-certtype" onchange="handleCertTypeChange()">
+            <option>SERTIFIKAT PENGHARGAAN</option>
+            <option>SERTIFIKAT KELULUSAN</option>
+            <option>SERTIFIKAT KOMPETENSI</option>
+            <option>SERTIFIKAT PARTISIPASI</option>
+            <option value="custom">— Kustom —</option>
+          </select>
+        </div>
+        <div class="field" id="custom-certtype-field" style="display:none"><label>Judul Kustom</label><input class="inp" id="inp-certtype-custom" oninput="liveUpdate()"/></div>
+        <div class="field"><label>Nama Program / Pelatihan</label><input class="inp" id="inp-course" value="Digital Marketing Mastery" oninput="liveUpdate()"/></div>
+        <div class="field"><label>Deskripsi</label><textarea class="inp" id="inp-desc" oninput="liveUpdate()">Telah berhasil menyelesaikan program pelatihan intensif dan menunjukkan kompetensi serta dedikasi yang luar biasa.</textarea></div>
+        <div class="field"><label>Teks Presentasi</label><input class="inp" id="inp-presented" value="Dengan bangga dipersembahkan kepada" oninput="liveUpdate()"/></div>
+      </div>
+    </div>
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Institusi & Meta</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <div class="field"><label>Nama Institusi</label><input class="inp" id="inp-org" value="PT Inovasi Digital Indonesia" oninput="liveUpdate()"/></div>
+        <div class="field"><label>Logo PNG Transparan</label>
+          <div class="upload-zone" onclick="document.getElementById('logo-inp').click()">
+            <input type="file" id="logo-inp" accept="image/*" onchange="handleLogoUpload(event)" style="display:none"/>
+            <div class="uz-icon">🖼</div>
+            <div class="uz-text"><strong>Upload Logo</strong>PNG transparan disarankan</div>
+          </div>
+          <div id="logo-preview-row" style="display:none;margin-top:5px">
+            <div style="display:flex;align-items:center;gap:7px;padding:7px 9px;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px">
+              <div id="logo-mini" style="width:40px;height:26px;background-size:contain;background-repeat:no-repeat;background-position:center"></div>
+              <span style="flex:1;font-size:11px;color:var(--text)">Logo aktif</span>
+              <button onclick="removeLogo()" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:15px">×</button>
+            </div>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Tanggal</label><input class="inp" id="inp-date" type="date" oninput="liveUpdate()"/></div>
+          <div class="field"><label>No. Registrasi</label><input class="inp" id="inp-certno" placeholder="CERT/2026/0001" oninput="liveUpdate()"/></div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:flex-end">
+          <div class="field" style="flex:1"><label>Auto Nomor Format</label><input class="inp" id="inp-autonumber-prefix" placeholder="CERT/2026/" style="font-size:11px"/></div>
+          <button class="btn btn-ghost btn-sm" onclick="autoIncrementCertNo()" style="flex-shrink:0">+1</button>
+        </div>
+      </div>
+    </div>
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Tanda Tangan & Stempel</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <div class="field"><label>Jumlah Penandatangan</label>
+          <select class="inp" id="inp-numsign" onchange="renderCert()">
+            <option value="2">2 Penandatangan</option>
+            <option value="1">1 Penandatangan</option>
+          </select>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Nama Pejabat 1</label><input class="inp" id="inp-s1n" value="Dr. Sari Wulandari, M.M." oninput="liveUpdate()"/></div>
+          <div class="field"><label>Jabatan 1</label><input class="inp" id="inp-s1t" value="Direktur Program" oninput="liveUpdate()"/></div>
+        </div>
+        <div class="field"><label>Tanda Tangan 1 (PNG)</label>
+          <div class="upload-zone" onclick="document.getElementById('sign1-inp').click()" style="padding:10px">
+            <input type="file" id="sign1-inp" accept="image/*" onchange="handleSignUpload(1,event)" style="display:none"/>
+            <div class="uz-text"><strong>Upload Gambar TTD 1</strong>PNG transparan</div>
+          </div>
+          <div id="sign1-preview-row" style="display:none;margin-top:4px">
+            <div style="display:flex;align-items:center;gap:7px;padding:6px 9px;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px">
+              <img id="sign1-mini" style="max-height:28px;max-width:90px;object-fit:contain"/>
+              <span style="flex:1;font-size:11px;color:var(--text)">TTD 1 aktif</span>
+              <button onclick="removeSign(1)" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:15px">×</button>
+            </div>
+          </div>
+        </div>
+        <div id="sign2-section">
+          <div class="row2" style="margin-top:4px">
+            <div class="field"><label>Nama Pejabat 2</label><input class="inp" id="inp-s2n" value="Ir. Budi Santoso, M.T." oninput="liveUpdate()"/></div>
+            <div class="field"><label>Jabatan 2</label><input class="inp" id="inp-s2t" value="Ketua Penyelenggara" oninput="liveUpdate()"/></div>
+          </div>
+          <div class="field" style="margin-top:6px"><label>Tanda Tangan 2 (PNG)</label>
+            <div class="upload-zone" onclick="document.getElementById('sign2-inp').click()" style="padding:10px">
+              <input type="file" id="sign2-inp" accept="image/*" onchange="handleSignUpload(2,event)" style="display:none"/>
+              <div class="uz-text"><strong>Upload Gambar TTD 2</strong>PNG transparan</div>
+            </div>
+            <div id="sign2-preview-row" style="display:none;margin-top:4px">
+              <div style="display:flex;align-items:center;gap:7px;padding:6px 9px;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px">
+                <img id="sign2-mini" style="max-height:28px;max-width:90px;object-fit:contain"/>
+                <span style="flex:1;font-size:11px;color:var(--text)">TTD 2 aktif</span>
+                <button onclick="removeSign(2)" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:15px">×</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field" style="margin-top:4px"><label>Teks Stempel</label><input class="inp" id="inp-seal" value="CERTIFIED" oninput="liveUpdate()"/></div>
+      </div>
+    </div>
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">QR Code Verifikasi</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <label class="cb-row"><input type="checkbox" id="opt-qr" onchange="renderCert()"><span class="cb-label">Tampilkan QR Code</span></label>
+        <div class="field"><label>URL Verifikasi</label><input class="inp" id="inp-qr-url" placeholder="https://verify.domain.com/" oninput="renderCert()"/></div>
+        <div class="row2">
+          <div class="field"><label>Ukuran</label>
+            <select class="inp" id="inp-qr-size" onchange="renderCert()">
+              <option value="60">Kecil (60px)</option>
+              <option value="80" selected>Sedang (80px)</option>
+              <option value="100">Besar (100px)</option>
+            </select>
+          </div>
+          <div class="field"><label>Posisi</label>
+            <select class="inp" id="inp-qr-pos" onchange="renderCert()">
+              <option value="br">Kanan Bawah</option>
+              <option value="bl">Kiri Bawah</option>
+              <option value="tr">Kanan Atas</option>
+              <option value="tl">Kiri Atas</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Elemen Kondisional</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <label class="cb-row"><input type="checkbox" id="opt-show-desc" checked onchange="renderCert()"><span class="cb-label">Deskripsi</span></label>
+        <label class="cb-row"><input type="checkbox" id="opt-show-no" checked onchange="renderCert()"><span class="cb-label">Nomor Registrasi</span></label>
+        <label class="cb-row"><input type="checkbox" id="opt-show-seal" checked onchange="renderCert()"><span class="cb-label">Stempel / Seal</span></label>
+        <label class="cb-row"><input type="checkbox" id="opt-show-rule" checked onchange="renderCert()"><span class="cb-label">Garis Aksen</span></label>
+        <label class="cb-row"><input type="checkbox" id="opt-show-divider" checked onchange="renderCert()"><span class="cb-label">Divider Ornamen</span></label>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-background" class="tab-pane" style="display:none">
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Gambar Latar</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <div class="upload-zone" id="drop-zone" onclick="document.getElementById('bg-inp').click()">
+          <input type="file" id="bg-inp" accept="image/*" onchange="handleBgUpload(event)" style="display:none"/>
+          <div class="uz-icon">⬆</div>
+          <div class="uz-text"><strong>Upload / Seret Gambar</strong>JPG, PNG maks 10MB</div>
+        </div>
+        <div id="bg-preview-row" style="display:none;margin-top:4px">
+          <div style="display:flex;align-items:center;gap:7px;padding:7px 9px;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px">
+            <div id="bg-mini" style="width:40px;height:26px;border-radius:3px;background-size:cover;background-position:center"></div>
+            <div style="flex:1;min-width:0"><div id="bg-filename" style="font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div></div>
+            <button onclick="removeBg()" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:15px">×</button>
+          </div>
+        </div>
+        <div class="field"><label>Fit Mode</label>
+          <select class="inp" id="inp-bgfit" onchange="updateBgFit()">
+            <option value="cover">Cover (Penuh)</option>
+            <option value="contain">Contain (Proporsional)</option>
+            <option value="100% 100%">Stretch</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Efek Layer</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <div class="field"><label>Opasitas Gambar</label><div class="slider-row"><input type="range" min="0" max="100" value="100" id="sl-bg-opacity" oninput="updateSlider('sl-bg-opacity','sl-bg-opacity-v','%')"/><span class="slider-val" id="sl-bg-opacity-v">100%</span></div></div>
+        <div class="field"><label>Kekuatan Overlay</label><div class="slider-row"><input type="range" min="0" max="100" value="65" id="sl-overlay" oninput="updateSlider('sl-overlay','sl-overlay-v','%')"/><span class="slider-val" id="sl-overlay-v">65%</span></div></div>
+        <div class="field"><label>Blur Gaussian</label><div class="slider-row"><input type="range" min="0" max="20" value="0" id="sl-blur" oninput="updateSlider('sl-blur','sl-blur-v','px')"/><span class="slider-val" id="sl-blur-v">0px</span></div></div>
+        <div class="field"><label>Kecerahan</label><div class="slider-row"><input type="range" min="50" max="150" value="100" id="sl-brightness" oninput="updateSlider('sl-brightness','sl-brightness-v','%')"/><span class="slider-val" id="sl-brightness-v">100%</span></div></div>
+      </div>
+    </div>
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Warna Dasar</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <div class="field"><label>Warna Background</label>
+          <div class="color-row"><input type="color" id="bg-color-pk" value="#0d1b3e" oninput="syncBgColor()"/><input class="inp color-hex" id="bg-color-hex" value="#0d1b3e" oninput="syncBgColorFromHex()"/></div>
+        </div>
+      </div>
+    </div>
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Watermark Proteksi</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <label class="cb-row"><input type="checkbox" id="opt-watermark" onchange="toggleWmPanel();renderCert()"><span class="cb-label">Aktifkan Watermark</span></label>
+        <div id="wm-panel" style="display:none;flex-direction:column;gap:8px">
+          <div class="field"><label>Teks Watermark</label><input class="inp" id="inp-wm-text" value="CERTIFYPRO DRAFT" oninput="renderCert()"/></div>
+          <div class="field"><label>Pola</label>
+            <select class="inp" id="inp-wm-pattern" onchange="renderCert()">
+              <option value="diagonal">Diagonal Grid</option>
+              <option value="badge">Center Badge</option>
+              <option value="waves">Crypto Waves</option>
+            </select>
+          </div>
+          <div class="field"><label>Opasitas</label><div class="slider-row"><input type="range" min="1" max="30" value="7" id="sl-wm-opacity" oninput="updateSlider('sl-wm-opacity','sl-wm-v','%'); renderCert()"/><span class="slider-val" id="sl-wm-v">7%</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-typography" class="tab-pane" style="display:none">
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Font Nama</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <div class="font-grid" id="name-font-grid">
+          <div class="font-btn active" onclick="setFont('name','Great Vibes',this)"><div class="font-btn-name" style="font-family:'Great Vibes',cursive;font-size:15px">Great Vibes</div><div class="font-btn-lbl">Script</div></div>
+          <div class="font-btn" onclick="setFont('name','Alex Brush',this)"><div class="font-btn-name" style="font-family:'Alex Brush',cursive;font-size:15px">Alex Brush</div><div class="font-btn-lbl">Fluid Script</div></div>
+          <div class="font-btn" onclick="setFont('name','Cormorant Garamond',this)"><div class="font-btn-name" style="font-family:'Cormorant Garamond',serif;font-style:italic">Cormorant</div><div class="font-btn-lbl">Serif Premium</div></div>
+          <div class="font-btn" onclick="setFont('name','Playfair Display',this)"><div class="font-btn-name" style="font-family:'Playfair Display',serif;font-style:italic">Playfair</div><div class="font-btn-lbl">Serif Classic</div></div>
+          <div class="font-btn" onclick="setFont('name','Cinzel',this)"><div class="font-btn-name" style="font-family:'Cinzel',serif;font-weight:600">Cinzel</div><div class="font-btn-lbl">Roman</div></div>
+          <div class="font-btn" onclick="setFont('name','Bodoni Moda',this)"><div class="font-btn-name" style="font-family:'Bodoni Moda',serif;font-style:italic">Bodoni</div><div class="font-btn-lbl">High Contrast</div></div>
+          <div class="font-btn" onclick="setFont('name','Lora',this)"><div class="font-btn-name" style="font-family:'Lora',serif;font-style:italic">Lora</div><div class="font-btn-lbl">Modern Serif</div></div>
+          <div class="font-btn" onclick="setFont('name','Space Grotesk',this)"><div class="font-btn-name" style="font-family:'Space Grotesk',sans-serif">Space Grotesk</div><div class="font-btn-lbl">Geometric</div></div>
+          <div class="font-btn" onclick="setFont('name','Montserrat',this)"><div class="font-btn-name" style="font-family:'Montserrat',sans-serif;font-weight:500">Montserrat</div><div class="font-btn-lbl">Neo Grotesque</div></div>
+          <div class="font-btn" onclick="setFont('name','DM Sans',this)"><div class="font-btn-name" style="font-family:'DM Sans',sans-serif">DM Sans</div><div class="font-btn-lbl">Minimalist</div></div>
+        </div>
+        <div class="field" style="margin-top:4px"><label>Ukuran Font Nama</label><div class="slider-row"><input type="range" min="28" max="72" value="48" id="sl-name-size" oninput="updateSlider('sl-name-size','sl-name-size-v','px');updateFontSizes()"/><span class="slider-val" id="sl-name-size-v">48px</span></div></div>
+        <div class="field"><label>Ketebalan</label>
+          <select class="inp" id="inp-name-weight" onchange="updateFontSizes()">
+            <option value="300">Light 300</option>
+            <option value="400" selected>Regular 400</option>
+            <option value="600">SemiBold 600</option>
+            <option value="700">Bold 700</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Font Judul Dokumen</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <div class="font-grid" id="title-font-grid">
+          <div class="font-btn active" onclick="setFont('title','Cormorant Garamond',this)"><div class="font-btn-name" style="font-family:'Cormorant Garamond',serif;font-weight:600">Cormorant</div><div class="font-btn-lbl">High-End</div></div>
+          <div class="font-btn" onclick="setFont('title','Cinzel',this)"><div class="font-btn-name" style="font-family:'Cinzel',serif;font-weight:700">CINZEL</div><div class="font-btn-lbl">Trajan</div></div>
+          <div class="font-btn" onclick="setFont('title','Playfair Display',this)"><div class="font-btn-name" style="font-family:'Playfair Display',serif;font-weight:700">Playfair</div><div class="font-btn-lbl">Classic</div></div>
+          <div class="font-btn" onclick="setFont('title','Bodoni Moda',this)"><div class="font-btn-name" style="font-family:'Bodoni Moda',serif;font-weight:700">Bodoni</div><div class="font-btn-lbl">Luxury</div></div>
+          <div class="font-btn" onclick="setFont('title','Space Grotesk',this)"><div class="font-btn-name" style="font-family:'Space Grotesk',sans-serif;font-weight:700">Space Grotesk</div><div class="font-btn-lbl">Tech</div></div>
+          <div class="font-btn" onclick="setFont('title','Syncopate',this)"><div class="font-btn-name" style="font-family:'Syncopate',sans-serif;font-size:9px;font-weight:700">SYNCOPATE</div><div class="font-btn-lbl">Extended</div></div>
+          <div class="font-btn" onclick="setFont('title','Montserrat',this)"><div class="font-btn-name" style="font-family:'Montserrat',sans-serif;font-weight:700">Montserrat</div><div class="font-btn-lbl">Geometric</div></div>
+          <div class="font-btn" onclick="setFont('title','DM Sans',this)"><div class="font-btn-name" style="font-family:'DM Sans',sans-serif;font-weight:700">DM Sans</div><div class="font-btn-lbl">Neo-Grotesk</div></div>
+        </div>
+        <div class="field" style="margin-top:4px"><label>Ukuran Font Judul</label><div class="slider-row"><input type="range" min="28" max="60" value="42" id="sl-title-size" oninput="updateSlider('sl-title-size','sl-title-size-v','px');updateFontSizes()"/><span class="slider-val" id="sl-title-size-v">42px</span></div></div>
+        <div class="field"><label>Letter Spacing</label><div class="slider-row"><input type="range" min="-2" max="20" value="4" id="sl-title-ls" oninput="updateSlider('sl-title-ls','sl-title-ls-v','%');updateFontSizes()"/><span class="slider-val" id="sl-title-ls-v">4%</span></div></div>
+      </div>
+    </div>
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Font Body & Aksen</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <div class="field"><label>Font Deskripsi</label>
+          <select class="inp" id="inp-body-font" onchange="updateFontSizes()">
+            <option value="DM Sans">DM Sans</option>
+            <option value="Lora">Lora</option>
+            <option value="Cormorant Garamond">Cormorant Garamond</option>
+            <option value="Montserrat">Montserrat</option>
+            <option value="IBM Plex Mono">IBM Plex Mono</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-colors" class="tab-pane" style="display:none">
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Warna Per Elemen</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <div class="color-elements-grid">
+          <div class="ce-item"><div class="ce-label">Aksen Utama</div><div class="ce-color-row"><input type="color" id="ce-accent" value="#c9a96e"/><input class="inp ce-hex" id="ce-accent-hex" value="#c9a96e" oninput="syncCEHex('accent')"/></div></div>
+          <div class="ce-item"><div class="ce-label">Aksen Sekunder</div><div class="ce-color-row"><input type="color" id="ce-accent2" value="#e8d5a3"/><input class="inp ce-hex" id="ce-accent2-hex" value="#e8d5a3" oninput="syncCEHex('accent2')"/></div></div>
+          <div class="ce-item"><div class="ce-label">Teks Utama</div><div class="ce-color-row"><input type="color" id="ce-textmain" value="#f0eeea"/><input class="inp ce-hex" id="ce-textmain-hex" value="#f0eeea" oninput="syncCEHex('textmain')"/></div></div>
+          <div class="ce-item"><div class="ce-label">Teks Sekunder</div><div class="ce-color-row"><input type="color" id="ce-textsec" value="#c0b8b0"/><input class="inp ce-hex" id="ce-textsec-hex" value="#c0b8b0" oninput="syncCEHex('textsec')"/></div></div>
+          <div class="ce-item"><div class="ce-label">Nama</div><div class="ce-color-row"><input type="color" id="ce-name" value="#f0eeea"/><input class="inp ce-hex" id="ce-name-hex" value="#f0eeea" oninput="syncCEHex('name')"/></div></div>
+          <div class="ce-item"><div class="ce-label">Course</div><div class="ce-color-row"><input type="color" id="ce-course" value="#c9a96e"/><input class="inp ce-hex" id="ce-course-hex" value="#c9a96e" oninput="syncCEHex('course')"/></div></div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:4px;width:100%" onclick="resetElementColors()">↺ Reset ke warna tema</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-bulk" class="tab-pane" style="display:none">
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Import CSV Massal</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <div style="font-size:10.5px;color:var(--text2);line-height:1.5;padding:8px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);border-radius:var(--r)">
+          Format CSV: <code style="color:var(--blue)">name,course,date,certno</code><br>
+          Kolom <em>name</em> wajib, lainnya opsional
+        </div>
+        <div class="upload-zone" onclick="document.getElementById('csv-inp').click()">
+          <input type="file" id="csv-inp" accept=".csv,.txt" onchange="handleCSVUpload(event)" style="display:none"/>
+          <div class="uz-icon">📊</div>
+          <div class="uz-text"><strong>Upload File CSV</strong>Maksimal 1000 baris</div>
+        </div>
+        <div id="bulk-status" class="bulk-status" style="display:none"></div>
+        <div id="bulk-table-wrap" class="bulk-table-container" style="display:none"></div>
+        <button class="btn btn-blue" id="bulk-gen-btn" style="width:100%;display:none;margin-top:5px" onclick="generateBulk()">
+          🚀 Generate & Download ZIP
+        </button>
+        <div id="bulk-progress-wrap" style="display:none;margin-top:5px">
+          <div class="bulk-status" id="bulk-progress-text">Memproses...</div>
+          <div class="bulk-progress"><div class="bulk-progress-inner" id="bulk-progress-bar"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Opsi Bulk Export</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <div class="field"><label>Format Output</label>
+          <select class="inp" id="bulk-format">
+            <option value="png">PNG (disarankan)</option>
+            <option value="jpg">JPEG</option>
+            <option value="pdf">PDF (1 per file)</option>
+          </select>
+        </div>
+        <div class="field"><label>Skala Resolusi</label><div class="slider-row"><input type="range" min="1" max="3" value="2" id="sl-bulk-scale" oninput="updateSlider('sl-bulk-scale','sl-bulk-scale-v','x')"/><span class="slider-val" id="sl-bulk-scale-v">2x</span></div></div>
+        <label class="cb-row"><input type="checkbox" id="bulk-auto-no" checked><span class="cb-label">Auto-increment nomor sertifikat</span></label>
+      </div>
+    </div>
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Contoh Template CSV</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <button class="btn btn-ghost btn-sm" style="width:100%" onclick="downloadSampleCSV()">⬇ Download sample.csv</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-ai" class="tab-pane" style="display:none">
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">AI Text Generator (Local)</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <div style="font-size:10.5px;color:var(--text2);line-height:1.5;padding:8px;background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.2);border-radius:var(--r)">
+          Fitur Generator Teks Kontekstual ini mengandalkan mesin pemroses lokal yang aman, instan, serta bebas hambatan kuota jaringan.
+        </div>
+        <div class="field"><label>Gaya Bahasa</label>
+          <select class="inp" id="ai-tone">
+            <option value="formal">Formal & Profesional</option>
+            <option value="inspiring">Inspiratif & Motivatif</option>
+            <option value="academic">Akademis & Resmi</option>
+            <option value="friendly">Friendly & Modern</option>
+          </select>
+        </div>
+        <div class="field"><label>Target Elemen</label>
+          <select class="inp" id="ai-target">
+            <option value="desc">Deskripsi Kelulusan</option>
+            <option value="org">Nama Institusi (Variasi)</option>
+          </select>
+        </div>
+        <div id="ai-thinking" class="ai-thinking" style="display:none">
+          <div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div>
+          <span>Generating...</span>
+        </div>
+        <button class="btn btn-blue" style="width:100%" onclick="runAIGenerate()">✨ Generate dengan AI</button>
+        <div class="field" style="margin-top:4px"><label>Hasil Preview</label><div class="ai-prompt-area" id="ai-result">Hasil akan muncul di sini...</div></div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;display:none" id="ai-apply-btn" onclick="applyAIResult()">Terapkan ke Sertifikat</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-layers" class="tab-pane" style="display:none">
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Drag Mode</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body">
+        <label class="cb-row"><input type="checkbox" id="opt-drag-mode" onchange="toggleDragMode()"><span class="cb-label">Aktifkan Drag Element</span></label>
+        <div style="font-size:10.5px;color:var(--text2);line-height:1.5;margin-top:4px">Setelah aktif, klik dan geser komponen di kanvas secara manual.</div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px;width:100%" onclick="resetPositions()">↺ Reset Semua Posisi</button>
+      </div>
+    </div>
+    <div class="psec">
+      <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Daftar Layer Komponen</span><span class="psec-chevron open">▾</span></div>
+      <div class="psec-body" id="layer-list"></div>
+    </div>
+  </div>
+
+</div><div class="canvas-area" id="canvas-area">
+  <div class="canvas-toolbar">
+    <span class="canvas-info">Workspace • <span id="cert-size-lbl">860 × 608</span></span>
+    <div class="zoom-ctrl">
+      <button class="zoom-btn" onclick="zoom(-10)">−</button>
+      <span class="zoom-val" id="zoom-val">75%</span>
+      <button class="zoom-btn" onclick="zoom(10)">+</button>
+      <button class="zoom-btn" onclick="zoom(0)" title="Reset zoom">⊙</button>
+    </div>
+  </div>
+  <div class="cert-stage-wrap">
+    <div class="cert-stage" id="cert-stage" style="transform:scale(0.75);transform-origin:top center">
+      <div id="certificate"></div>
+    </div>
+  </div>
+</div>
+
+<div class="panel-r">
+  <div class="psec">
+    <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Status Dokumen</span><span class="psec-chevron open">▾</span></div>
+    <div class="psec-body" style="gap:6px">
+      <div class="info-row"><span class="info-key">Tema</span><span class="info-val" id="info-theme">Bisnis Digital</span></div>
+      <div class="info-row"><span class="info-key">Format</span><span class="info-val" id="info-format">Landscape A4</span></div>
+      <div class="info-row"><span class="info-key">Background</span><span class="info-val" id="info-bg">Solid</span></div>
+      <div class="info-row"><span class="info-key">Tanda Tangan</span><span class="info-val" id="info-signs">Text</span></div>
+      <div class="info-row"><span class="info-key">QR Code</span><span class="info-val" id="info-qr"><span class="badge">Off</span></span></div>
+      <div class="info-row"><span class="info-key">Watermark</span><span class="info-val" id="info-wm"><span class="badge">Off</span></span></div>
+    </div>
+  </div>
+
+  <div class="psec">
+    <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Export</span><span class="psec-chevron open">▾</span></div>
+    <div class="psec-body">
+      <button class="btn btn-solid" style="width:100%;padding:8px" onclick="exportAs('pdf')">⬇ PDF HD</button>
+      <button class="btn btn-ghost" style="width:100%;padding:7px;margin-top:5px" onclick="exportAs('png')">⬇ PNG</button>
+      <button class="btn btn-ghost" style="width:100%;padding:7px;margin-top:5px" onclick="exportAs('jpg')">⬇ JPEG</button>
+      <div class="field" style="margin-top:8px"><label>Skala Resolusi</label><div class="slider-row"><input type="range" min="1" max="4" value="2" id="sl-export-scale" oninput="updateSlider('sl-export-scale','sl-export-scale-v','x')"/><span class="slider-val" id="sl-export-scale-v">2x</span></div></div>
+    </div>
+  </div>
+
+  <div class="psec">
+    <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">History Log</span><span class="psec-chevron open">▾</span></div>
+    <div class="psec-body">
+      <div style="font-size:10.5px;color:var(--text2);margin-bottom:4px" id="history-status">0 / 10 steps</div>
+      <div id="history-list" style="display:flex;flex-direction:column;gap:3px;max-height:140px;overflow-y:auto"></div>
+    </div>
+  </div>
+
+  <div class="psec">
+    <div class="psec-hd" onclick="toggleSec(this)"><span class="psec-label">Keyboard Shortcuts</span><span class="psec-chevron open">▾</span></div>
+    <div class="psec-body" style="gap:4px">
+      <div class="info-row"><span class="info-key" style="font-family:'IBM Plex Mono',monospace;font-size:10px">Ctrl+Z</span><span class="info-val" style="font-size:10px">Undo</span></div>
+      <div class="info-row"><span class="info-key" style="font-family:'IBM Plex Mono',monospace;font-size:10px">Ctrl+Y</span><span class="info-val" style="font-size:10px">Redo</span></div>
+      <div class="info-row"><span class="info-key" style="font-family:'IBM Plex Mono',monospace;font-size:10px">Ctrl+S</span><span class="info-val" style="font-size:10px">Simpan Template</span></div>
+      <div class="info-row"><span class="info-key" style="font-family:'IBM Plex Mono',monospace;font-size:10px">Ctrl+E</span><span class="info-val" style="font-size:10px">Export PNG</span></div>
+      <div class="info-row"><span class="info-key" style="font-family:'IBM Plex Mono',monospace;font-size:10px">+/-</span><span class="info-val" style="font-size:10px">Zoom In/Out</span></div>
+    </div>
+  </div>
+</div>
+
+</div><div class="statusbar">
+  <div class="sb-dot"></div>
+  <span class="sb-item">CertifyPro v3.0.0</span>
+  <span class="sb-item" id="sb-theme">Tema: Bisnis Digital</span>
+  <span class="sb-item" id="sb-dim">860 × 608px</span>
+  <span class="sb-item" id="sb-zoom">Zoom: 75%</span>
+  <span class="sb-item" id="sb-history">History: 0/10</span>
+  <span class="sb-item" style="margin-left:auto;color:#3b82f6" id="sb-bulk">Bulk: Ready</span>
+</div>
+
+</div><div class="overlay" id="loading-overlay">
+  <div class="overlay-box">
+    <div class="spinner"></div>
+    <div class="overlay-title" id="loading-title">Memproses...</div>
+    <div class="overlay-sub" id="loading-sub"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="toast-ico ok" id="toast-ico">✓</span><span id="toast-msg">OK</span></div>
+
+<div id="qr-gen-container" style="position:fixed;left:-9999px;top:-9999px;z-index:-1"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+const S = {
+  theme: 'bisnis',
+  bgImage: null,
+  logoImage: null,
+  sign1Image: null,
+  sign2Image: null,
+  bgOpacity: 1,
+  overlayOpacity: 0.65,
+  bgBlur: 0,
+  bgBrightness: 100,
+  bgColor: '#0d1b3e',
+  bgFit: 'cover',
+  nameFont: 'Great Vibes',
+  titleFont: 'Cormorant Garamond',
+  bodyFont: 'DM Sans',
+  nameFontSize: 48,
+  titleFontSize: 42,
+  titleLS: 4,
+  nameFontWeight: 400,
+  zoomLevel: 75,
+  dragMode: false,
+  elementColors: {},
+  customPositions: {},
+  bulkData: [],
+  aiResult: '',
+  layerVisibility: {
+    'el-org': true,
+    'el-type-wrap': true,
+    'el-presented': true,
+    'el-name': true,
+    'el-desc': true,
+    'el-course-wrap': true,
+    'el-footer': true
+  }
+};
+
+const THEMES = [
+  {id:'bisnis',  name:'Bisnis Digital',   sub:'Web3 • BI',    bg:'#0d1b3e', dot:'linear-gradient(135deg,#0d1b3e,#1a3060)', code:'BD'},
+  {id:'elegance',name:'Elegan Classic',   sub:'Premium Corp', bg:'#180e0e', dot:'linear-gradient(135deg,#180e0e,#3d1a1a)', code:'EC'},
+  {id:'modern',  name:'Modern Tech',      sub:'Supply Chain', bg:'#060610', dot:'linear-gradient(135deg,#060610,#001a40)', code:'MT'},
+  {id:'royal',   name:'Royal Prestige',   sub:'Luxury',       bg:'#0c0920', dot:'linear-gradient(135deg,#0c0920,#2d1b8a)', code:'RP'},
+  {id:'nature',  name:'Nature Harmony',   sub:'Green Digital',bg:'#081408', dot:'linear-gradient(135deg,#081408,#0a2010)', code:'NH'},
+  {id:'minimal', name:'Clean Minimal',    sub:'Putih Bersih', bg:'#f8f8f5', dot:'linear-gradient(135deg,#f4f4f0,#ddd)', code:'CM'},
+  {id:'ai',      name:'AI Synthetic',     sub:'AI Marketing', bg:'#0d041a', dot:'linear-gradient(135deg,#0d041a,#4c1d95)', code:'AI'},
+  {id:'data',    name:'Data Matrix',      sub:'Big Data',     bg:'#020b14', dot:'linear-gradient(135deg,#020b14,#0f2d4a)', code:'DM'},
+  {id:'fintech', name:'Fintech Emerald',  sub:'FinTech',      bg:'#021a14', dot:'linear-gradient(135deg,#021a14,#044e3b)', code:'FE'},
+  {id:'cyber',   name:'Cyber Sentinel',   sub:'Cybersec',     bg:'#0b0c10', dot:'linear-gradient(135deg,#0b0c10,#450a0a)', code:'CS'},
+  {id:'creative',name:'Creative Coral',   sub:'UI/UX',        bg:'#1a0a0d', dot:'linear-gradient(135deg,#1a0a0d,#9f1239)', code:'CC'},
+  {id:'omni',    name:'Omni Terracotta',  sub:'UMKM Omni',    bg:'#24110c', dot:'linear-gradient(135deg,#24110c,#7b341e)', code:'OT'},
+];
+
+/* ══════════════════════════════════════════
+   INDEXEDDB
+══════════════════════════════════════════ */
+const DB_NAME='CertifyProV3_Store';
+let DB=null;
+function initDB(cb){
+  const req=indexedDB.open(DB_NAME,1);
+  req.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains('assets'))db.createObjectStore('assets')};
+  req.onsuccess=e=>{DB=e.target.result;cb()};
+  req.onerror=()=>cb();
+}
+function dbSave(key,val){if(!DB)return;DB.transaction('assets','readwrite').objectStore('assets').put(val,key)}
+function dbLoad(key,cb){
+  if(!DB){cb(null);return}
+  const req=DB.transaction('assets','readonly').objectStore('assets').get(key);
+  req.onsuccess=()=>cb(req.result||null);
+  req.onerror=()=>cb(null);
+}
+function dbDel(key){if(!DB)return;DB.transaction('assets','readwrite').objectStore('assets').delete(key)}
+
+/* ══════════════════════════════════════════
+   UNDO/REDO HISTORY
+══════════════════════════════════════════ */
+const history={stack:[],idx:-1,max:10};
+function pushHistory(label){
+  const snap={label,time:Date.now(),state:JSON.stringify(getFormSnapshot())};
+  history.stack=history.stack.slice(0,history.idx+1);
+  history.stack.push(snap);
+  if(history.stack.length>history.max)history.stack.shift();
+  history.idx=history.stack.length-1;
+  updateHistoryUI();
+}
+function undo(){
+  if(history.idx<=0){toast('Tidak ada history','info');return}
+  history.idx--;
+  restoreSnapshot(JSON.parse(history.stack[history.idx].state));
+  updateHistoryUI();
+  toast('↩ Undo','info');
+}
+function redo(){
+  if(history.idx>history.stack.length-2){toast('Sudah di ujung history','info');return}
+  history.idx++;
+  restoreSnapshot(JSON.parse(history.stack[history.idx].state));
+  updateHistoryUI();
+  toast('↪ Redo','info');
+}
+function updateHistoryUI(){
+  const list=document.getElementById('history-list');
+  const status=document.getElementById('history-status');
+  const sb=document.getElementById('sb-history');
+  const total=history.stack.length;
+  status.textContent=`${history.idx+1} / ${total} steps`;
+  sb.textContent=`History: ${total}/${history.max}`;
+  list.innerHTML=history.stack.map((h,i)=>`
+    <div class="layer-item" onclick="jumpHistory(${i})" style="background:${i===history.idx?'var(--blue2)':'transparent'};border:1px solid ${i===history.idx?'var(--blue)':'var(--border)'}">
+      <span class="layer-name" style="color:${i===history.idx?'var(--text)':'var(--text2)'}">${h.label}</span>
+      <span style="font-size:8.5px;color:var(--text3)">${new Date(h.time).toLocaleTimeString('id-ID')}</span>
+    </div>`).join('');
+}
+function jumpHistory(idx){
+  history.idx=idx;
+  restoreSnapshot(JSON.parse(history.stack[idx].state));
+  updateHistoryUI();
+}
+
+function getFormSnapshot(){
+  const fields=['inp-name','inp-certtype','inp-certtype-custom','inp-course','inp-desc','inp-presented','inp-org','inp-date','inp-certno','inp-s1n','inp-s1t','inp-s2n','inp-s2t','inp-seal','inp-qr-url','inp-wm-text','inp-autonumber-prefix'];
+  const snap={fields:{},S_sub:{theme:S.theme,bgColor:S.bgColor,nameFont:S.nameFont,titleFont:S.titleFont,nameFontSize:S.nameFontSize,titleFontSize:S.titleFontSize,overlayOpacity:S.overlayOpacity}};
+  fields.forEach(id=>{const el=document.getElementById(id);if(el)snap.fields[id]=el.value});
+  return snap;
+}
+function restoreSnapshot(snap){
+  if(snap.fields)Object.keys(snap.fields).forEach(id=>{const el=document.getElementById(id);if(el)el.value=snap.fields[id]});
+  if(snap.S_sub){
+    Object.assign(S,snap.S_sub);
+    document.querySelectorAll('.theme-card').forEach(c=>{
+      c.classList.toggle('active',c.dataset.theme===S.theme);
+    });
+    const bcpEl=document.getElementById('bg-color-pk');
+    const bchEl=document.getElementById('bg-color-hex');
+    if(bcpEl)bcpEl.value=S.bgColor;
+    if(bchEl)bchEl.value=S.bgColor;
+  }
+  renderCert();
+}
+
+/* ══════════════════════════════════════════
+   TAB SWITCHING
+══════════════════════════════════════════ */
+function switchTab(name,el){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.style.display='none');
+  el.classList.add('active');
+  const pane=document.getElementById('tab-'+name);
+  if(pane)pane.style.display='block';
+}
+function toggleSec(hd){
+  const body=hd.nextElementSibling;
+  const chev=hd.querySelector('.psec-chevron');
+  if(body)body.classList.toggle('collapsed');
+  if(chev)chev.classList.toggle('open');
+}
+
+/* ══════════════════════════════════════════
+   THEME SETUP
+══════════════════════════════════════════ */
+function buildThemeGrid(){
+  const grid=document.getElementById('theme-grid');
+  grid.innerHTML=THEMES.map(t=>`
+    <div class="theme-card${t.id===S.theme?' active':''}" data-theme="${t.id}" onclick="selectTheme('${t.id}',this)">
+      <div class="theme-dot" style="background:${t.dot};${t.id==='minimal'?'border:1px solid #ddd;color:#555':''}">
+        <span style="font-size:7.5px;font-weight:700">${t.code}</span>
+      </div>
+      <div>
+        <div class="theme-name">${t.name}</div>
+        <div class="theme-sub">${t.sub}</div>
+      </div>
+    </div>`).join('');
+}
+function selectTheme(id,el){
+  pushHistory(`Tema: ${id}`);
+  S.theme=id;
+  const meta=THEMES.find(t=>t.id===id);
+  if(meta){
+    S.bgColor=meta.bg;
+    document.getElementById('bg-color-pk').value=meta.bg;
+    document.getElementById('bg-color-hex').value=meta.bg;
+    document.getElementById('info-theme').textContent=meta.name;
+    document.getElementById('sb-theme').textContent='Tema: '+meta.name;
+    const bgcol=document.getElementById('cert-color-bg');
+    if(bgcol)bgcol.style.backgroundColor=meta.bg;
+  }
+  document.querySelectorAll('.theme-card').forEach(c=>c.classList.toggle('active',c.dataset.theme===id));
+  S.elementColors={};
+  renderCert();
+  toast(`Tema: ${meta.name}`,'ok');
+}
+
+/* ══════════════════════════════════════════
+   FORM VALUES
+══════════════════════════════════════════ */
+function v(id,fallback=''){
+  const el=document.getElementById(id);
+  return el?el.value:fallback;
+}
+function checked(id){
+  const el=document.getElementById(id);
+  return el?el.checked:false;
+}
+function getCertValues(){
+  const ctEl=document.getElementById('inp-certtype');
+  const certType=ctEl.value==='custom'?(v('inp-certtype-custom')||'SERTIFIKAT'):ctEl.value;
+  return{
+    name:v('inp-name')||'Nama Penerima',
+    certType, course:v('inp-course')||'Nama Program',
+    desc:v('inp-desc')||'',
+    presented:v('inp-presented')||'Dengan bangga dipersembahkan kepada',
+    org:v('inp-org')||'Nama Institusi',
+    date:v('inp-date'), certNo:v('inp-certno'),
+    s1n:v('inp-s1n')||'Penandatangan 1', s1t:v('inp-s1t')||'Jabatan',
+    s2n:v('inp-s2n')||'Penandatangan 2', s2t:v('inp-s2t')||'Jabatan',
+    seal:v('inp-seal')||'CERTIFIED',
+    numsign:parseInt(v('inp-numsign'))||2,
+    layout:v('inp-layout')||'center',
+    showDesc:checked('opt-show-desc'),
+    showNo:checked('opt-show-no'),
+    showSeal:checked('opt-show-seal'),
+    showRule:checked('opt-show-rule'),
+    showDivider:checked('opt-show-divider'),
+    showBorder:checked('opt-border'),
+    showCorners:checked('opt-corners'),
+    showInnerBorder:checked('opt-inner-border'),
+    showAccentBar:checked('opt-accent-bar'),
+    showSVGOrnament:checked('opt-svg-ornament'),
+    ornamentStyle:v('inp-ornament-style'),
+    showQR:checked('opt-qr'),
+    qrUrl:v('inp-qr-url'),
+    qrSize:parseInt(v('inp-qr-size'))||80,
+    qrPos:v('inp-qr-pos')||'br',
+    showWM:checked('opt-watermark'),
+    wmText:v('inp-wm-text')||'CERTIFYPRO DRAFT',
+    wmPattern:v('inp-wm-pattern')||'diagonal',
+    wmOpacity:parseInt(document.getElementById('sl-wm-opacity').value)||7,
+  };
+}
+
+function fmtDate(v){
+  if(!v)return '';
+  const M=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const d=new Date(v+'T12:00:00');
+  return `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()}`;
+}
+function handleCertTypeChange(){
+  const val=document.getElementById('inp-certtype').value;
+  document.getElementById('custom-certtype-field').style.display=val==='custom'?'block':'none';
+  liveUpdate();
+}
+
+/* ══════════════════════════════════════════
+   DECORATIONS
+══════════════════════════════════════════ */
+function getDecoHTML(cv){
+  let html='';
+  if(cv.showBorder)html+=`<div class="deco-border"></div>`;
+  if(cv.showInnerBorder)html+=`<div class="deco-border-inner"></div>`;
+  if(cv.showCorners)html+=`<div class="deco-corners"><div class="dc dc-tl"></div><div class="dc dc-tr"></div><div class="dc dc-bl"></div><div class="dc dc-br"></div></div>`;
+  if(cv.showAccentBar)html+=`<div class="deco-accent-bar"></div>`;
+  if(cv.showSVGOrnament)html+=getSVGOrnament(cv.ornamentStyle);
+  return html;
+}
+
+function getSVGOrnament(style){
+  const base=`position:absolute;inset:0;width:100%;height:100%;opacity:0.055;pointer-events:none;z-index:4`;
+  if(style==='flourish')return`<svg style="${base}" viewBox="0 0 860 608" xmlns="http://www.w3.org/2000/svg"><g stroke="currentColor" fill="none" stroke-width="0.8" opacity=".6"><path d="M430 30 Q480 80 430 130 Q380 80 430 30Z"/><path d="M430 478 Q480 528 430 578 Q380 528 430 478Z"/><path d="M30 280 Q80 330 130 280 Q80 230 30 280Z"/><path d="M730 280 Q780 330 830 280 Q780 230 730 280Z"/><circle cx="430" cy="304" r="120" stroke-dasharray="4 8"/><circle cx="430" cy="304" r="180" stroke-dasharray="2 12"/></g></svg>`;
+  if(style==='geometric')return`<svg style="${base}" viewBox="0 0 860 608" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="geo" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M0 20h40M20 0v40" stroke="currentColor" stroke-width=".4"/><circle cx="20" cy="20" r="1" fill="currentColor"/></pattern></defs><rect width="860" height="608" fill="url(#geo)"/></svg>`;
+  if(style==='hex')return`<svg style="${base}" viewBox="0 0 860 608" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="hex" x="0" y="0" width="50" height="43" patternUnits="userSpaceOnUse"><polygon points="25,2 48,14 48,29 25,41 2,29 2,14" fill="none" stroke="currentColor" stroke-width=".5"/></pattern></defs><rect width="860" height="608" fill="url(#hex)"/></svg>`;
+  if(style==='waves')return`<svg style="${base}" viewBox="0 0 860 608" xmlns="http://www.w3.org/2000/svg"><g stroke="currentColor" fill="none" stroke-width=".6">${Array.from({length:14},(_,i)=>`<path d="M0 ${40+i*40} Q215 ${20+i*40} 430 ${40+i*40} T860 ${40+i*40}"/>`).join('')}</g></svg>`;
+  return '';
+}
+
+/* ══════════════════════════════════════════
+   QR CODE
+══════════════════════════════════════════ */
+async function generateQRDataURL(text,size){
+  return new Promise(resolve=>{
+    const c=document.getElementById('qr-gen-container');
+    c.innerHTML='';
+    const url=text||(window.location.origin+'/verify?id='+Date.now());
+    try{
+      new QRCode(c,{text:url,width:size,height:size,correctLevel:QRCode.CorrectLevel.M});
+      setTimeout(()=>{
+        const img=c.querySelector('img')||c.querySelector('canvas');
+        if(img){
+          if(img.tagName==='CANVAS'){resolve(img.toDataURL('image/png'))}
+          else{resolve(img.src)}
+        }else resolve(null);
+      },150);
+    }catch(e){resolve(null)}
+  });
+}
+
+/* ══════════════════════════════════════════
+   WATERMARK
+══════════════════════════════════════════ */
+function getWatermarkStyle(cv){
+  if(!cv.showWM)return'display:none';
+  const alpha=cv.wmOpacity/100;
+  const isMinimal=S.theme==='minimal';
+  const color=isMinimal?`rgba(0,0,0,${alpha})`:`rgba(255,255,255,${alpha})`;
+  let svg='';
+  if(cv.wmPattern==='diagonal'){
+    svg=`<svg xmlns="http://www.w3.org/2000/svg" width="220" height="140"><text x="110" y="70" fill="${color}" font-family="sans-serif" font-size="10" font-weight="700" letter-spacing="0.12em" transform="rotate(-28 110 70)" text-anchor="middle">${cv.wmText}</text></svg>`;
+  }else if(cv.wmPattern==='badge'){
+    svg=`<svg xmlns="http://www.w3.org/2000/svg" width="430" height="304"><circle cx="215" cy="152" r="74" fill="none" stroke="${color}" stroke-width="1" stroke-dasharray="4,4"/><circle cx="215" cy="152" r="66" fill="none" stroke="${color}" stroke-width=".5"/><text x="215" y="155" fill="${color}" font-family="sans-serif" font-size="8.5" font-weight="700" letter-spacing="0.22em" text-anchor="middle">${cv.wmText}</text></svg>`;
+  }else{
+    svg=`<svg xmlns="http://www.w3.org/2000/svg" width="280" height="110"><path d="M0,55 Q70,35 140,55 T280,55" fill="none" stroke="${color}" stroke-width=".7"/><text x="140" y="42" fill="${color}" font-family="sans-serif" font-size="7.5" font-weight="600" letter-spacing="0.14em" text-anchor="middle">${cv.wmText}</text></svg>`;
+  }
+  return`background-image:url("data:image/svg+xml,${encodeURIComponent(svg)}");background-repeat:repeat;display:block`;
+}
+
+/* ══════════════════════════════════════════
+   MAIN RENDER
+══════════════════════════════════════════ */
+async function renderCert(doQR=true){
+  const cert=document.getElementById('certificate');
+  const cv=getCertValues();
+  const t=S.theme;
+
+  cert.className=`t-${t}`;
+
+  const bgImgStyle=S.bgImage
+    ?`background-image:url('${S.bgImage}');background-size:${S.bgFit};background-position:center;opacity:${S.bgOpacity};filter:blur(${S.bgBlur}px) brightness(${S.bgBrightness}%)`
+    : 'display:none';
+
+  const logoHtml=S.logoImage?`<div class="c-logo-wrap${cv.layout==='left'?' left':''}"><img src="${S.logoImage}" crossorigin="anonymous"/></div>`:'';
+
+  function signBlock(n,sigImg,name,title,align='center'){
+    const imgHtml=sigImg?`<img src="${sigImg}" class="sign-img" crossorigin="anonymous"/>`:`<div style="height:38px"></div>`;
+    return`<div class="c-sign-block" style="align-items:${align==='right'?'flex-end':'center'}">${imgHtml}<div class="sign-line"></div><div class="c-sign-name">${name}</div><div class="c-sign-role">${title}</div></div>`;
+  }
+
+  let footer='';
+  if(cv.numsign===1){
+    footer=`
+      <div class="c-date-block" style="text-align:left"><span class="c-date-lbl">DITERBITKAN</span><span class="c-date-val">${fmtDate(cv.date)}</span></div>
+      ${cv.showSeal?`<div class="c-seal">${cv.seal.split(' ').slice(0,2).join('<br>')}</div>`:'<div></div>'}
+      ${signBlock(1,S.sign1Image,cv.s1n,cv.s1t)}`;
+  }else{
+    footer=`
+      ${signBlock(1,S.sign1Image,cv.s1n,cv.s1t)}
+      ${cv.showSeal?`<div style="display:flex;flex-direction:column;align-items:center;gap:6px"><div class="c-seal">${cv.seal.split(' ').slice(0,2).join('<br>')}</div></div>`:'<div></div>'}
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+        ${signBlock(2,S.sign2Image,cv.s2n,cv.s2t,'right')}
+        <div class="c-date-block"><span class="c-date-lbl">DITERBITKAN</span><span class="c-date-val">${fmtDate(cv.date)}</span></div>
+      </div>`;
+  }
+
+  const isLeft=cv.layout==='left'&&t==='modern';
+  const layoutClass=`cert-layout${isLeft?' left-align':''}`;
+
+  cert.innerHTML=`
+    <div class="cert-bg-color" id="cert-color-bg" style="background-color:${S.bgColor}"></div>
+    <div class="cert-bg-img" id="cert-bg-img" style="${bgImgStyle}"></div>
+    <div class="cert-overlay" id="cert-overlay" style="opacity:${S.overlayOpacity}"></div>
+    <div class="cert-wm" id="cert-wm" style="${getWatermarkStyle(cv)}"></div>
+    ${getDecoHTML(cv)}
+    <div class="${layoutClass}">
+      <div id="layer-block-logo" style="${S.layerVisibility['layer-block-logo']===false?'display:none':''}">${logoHtml}</div>
+      <div id="el-org" class="draggable-element" style="${S.layerVisibility['el-org']===false?'display:none':''}; ${S.elementColors.accent?`color:${S.elementColors.accent}`:''}">${cv.org}</div>
+      ${cv.showRule?`<div class="c-rule${isLeft?' left':''}"></div>`:''}
+      <div id="el-type-wrap" class="draggable-element c-type-wrap${isLeft?' left':''}" style="${S.layerVisibility['el-type-wrap']===false?'display:none':''}">
+        <div class="c-type" id="el-type" style="font-family:'${S.titleFont}',serif;font-size:${S.titleFontSize}px;letter-spacing:${S.titleLS/10}em;${S.elementColors.textmain?`color:${S.elementColors.textmain}`:''}">${cv.certType}</div>
+        <div class="c-sub">OF EXCELLENCE</div>
+      </div>
+      ${cv.showDivider?`<div class="c-divider${isLeft?' left':''}">◆</div>`:''}
+      <div id="el-presented" class="draggable-element" style="${S.layerVisibility['el-presented']===false?'display:none':''}; ${S.elementColors.textsec?`color:${S.elementColors.textsec}`:''}">${cv.presented}</div>
+      <div id="el-name" class="draggable-element c-name" style="font-family:'${S.nameFont}',serif;font-size:${S.nameFontSize}px;font-weight:${S.nameFontWeight};${S.layerVisibility['el-name']===false?'display:none':''}; ${S.elementColors.name?`color:${S.elementColors.name}`:''}">${cv.name}</div>
+      ${cv.showDesc&&cv.desc?`<div class="c-desc draggable-element" id="el-desc" style="font-family:'${S.bodyFont}',sans-serif;${S.layerVisibility['el-desc']===false?'display:none':''}; ${S.elementColors.textsec?`color:${S.elementColors.textsec}`:''}">${cv.desc}</div>`:''}
+      <div id="el-course-wrap" class="draggable-element c-course-wrap${isLeft?' left':''}" style="${S.layerVisibility['el-course-wrap']===false?'display:none':''}">
+         <div class="c-course" id="el-course" style="${S.elementColors.course?`color:${S.elementColors.course}`:''}">${cv.course}</div>
+      </div>
+      ${cv.showNo&&cv.certNo?`<div class="c-cert-no">${cv.certNo}</div>`:''}
+      <div id="el-footer" class="c-footer" style="width:100%; ${S.layerVisibility['el-footer']===false?'display:none':''}">${footer}</div>
+    </div>
+    <div id="qr-placeholder"></div>`;
+
+  Object.keys(S.customPositions).forEach(id=>{
+    const element = cert.querySelector('#'+id);
+    if(element){
+      element.style.position = 'absolute';
+      element.style.left = S.customPositions[id].left + 'px';
+      element.style.top = S.customPositions[id].top + 'px';
+    }
+  });
+
+  if(cv.showQR&&doQR){
+    const qrUrl=cv.qrUrl||(window.location.origin+'/verify?cert='+encodeURIComponent(cv.certNo||cv.name));
+    const qrDataURL=await generateQRDataURL(qrUrl,cv.qrSize);
+    if(qrDataURL){
+      const posStyle={
+        br:'bottom:14px;right:14px',
+        bl:'bottom:14px;left:14px',
+        tr:'top:14px;right:14px',
+        tl:'top:14px;left:14px'
+      }[cv.qrPos||'br'];
+      const qrEl=cert.querySelector('#qr-placeholder');
+      if(qrEl)qrEl.innerHTML=`<div style="position:absolute;${posStyle};z-index:20;background:rgba(255,255,255,0.9);padding:4px;border-radius:4px"><img src="${qrDataURL}" width="${cv.qrSize}" height="${cv.qrSize}"/></div>`;
+    }
+  }
+
+  document.getElementById('info-qr').innerHTML=cv.showQR?'<span class="badge badge-green">On</span>':'<span class="badge" style="background:rgba(255,255,255,.05);color:var(--text2)">Off</span>';
+  document.getElementById('info-wm').innerHTML=cv.showWM?'<span class="badge badge-green">On</span>':'<span class="badge" style="background:rgba(255,255,255,.05);color:var(--text2)">Off</span>';
+  document.getElementById('info-signs').textContent=(S.sign1Image?'Pejabat 1 ':'')+(cv.numsign===2&&S.sign2Image?'Pejabat 2':'')||'Hanya Teks';
+
+  if(S.dragMode)enableDragOnElements();
+  syncLayersPanel();
+  applyElementColors();
+}
+
+function liveUpdate(){
+  const cert=document.getElementById('certificate');
+  if(!cert.innerHTML){renderCert();return}
+  const cv=getCertValues();
+  const upd=(id,txt)=>{const el=cert.querySelector('#'+id);if(el)el.textContent=txt};
+  upd('el-org',cv.org);
+  upd('el-type',cv.certType);
+  upd('el-presented',cv.presented);
+  upd('el-name',cv.name);
+  upd('el-course',cv.course);
+  const desc=cert.querySelector('#el-desc');
+  if(desc){desc.style.display=cv.showDesc&&cv.desc&&S.layerVisibility['el-desc']!==false?'':'none';desc.textContent=cv.desc}
+  const sign1s=cert.querySelectorAll('.c-sign-name');
+  const sign1r=cert.querySelectorAll('.c-sign-role');
+  if(sign1s[0])sign1s[0].textContent=cv.s1n;
+  if(sign1r[0])sign1r[0].textContent=cv.s1t;
+  if(sign1s[1])sign1s[1].textContent=cv.s2n;
+  if(sign1r[1])sign1r[1].textContent=cv.s2t;
+  cert.querySelectorAll('.c-date-val').forEach(e=>e.textContent=fmtDate(cv.date));
+  const seal=cert.querySelector('.c-seal');
+  if(seal){seal.style.display=cv.showSeal?'':'none';seal.innerHTML=cv.seal.split(' ').slice(0,2).join('<br>')}
+}
+
+/* ══════════════════════════════════════════
+   ELEMENT COLORS
+══════════════════════════════════════════ */
+function applyElementColors(){
+  const cert=document.getElementById('certificate');
+  if(!cert)return;
+  const ec=S.elementColors;
+  if(ec.accent){
+    cert.querySelectorAll('.c-org,.c-rule,.c-seal').forEach(e=>{
+      if(e.classList.contains('c-org'))e.style.color=ec.accent;
+      if(e.classList.contains('c-seal')){e.style.color=ec.accent;e.style.borderColor=ec.accent}
+      if(e.classList.contains('c-rule'))e.style.background=`linear-gradient(90deg,transparent,${ec.accent},transparent)`
+    });
+  }
+  if(ec.accent2){cert.querySelectorAll('.c-course').forEach(e=>e.style.color=ec.accent2)}
+  if(ec.textmain){cert.querySelectorAll('.c-type').forEach(e=>e.style.color=ec.textmain)}
+  if(ec.textsec){cert.querySelectorAll('.c-desc,.c-presented').forEach(e=>e.style.color=ec.textsec)}
+  if(ec.name){cert.querySelectorAll('.c-name').forEach(e=>e.style.color=ec.name)}
+  if(ec.course){cert.querySelectorAll('.c-course').forEach(e=>e.style.color=ec.course)}
+}
+
+function syncCEHex(key){
+  const hexEl=document.getElementById(`ce-${key}-hex`);
+  const pkEl=document.getElementById(`ce-${key}`);
+  const val=hexEl.value;
+  if(/^#[0-9a-fA-F]{6}$/.test(val)){
+    pkEl.value=val;
+    S.elementColors[key]=val;
+    applyElementColors();
+  }
+}
+document.querySelectorAll('[id^=ce-]').forEach(el=>{
+  if(el.type==='color'){
+    el.addEventListener('input',function(){
+      const key=this.id.replace('ce-','');
+      S.elementColors[key]=this.value;
+      const hexEl=document.getElementById(`ce-${key}-hex`);
+      if(hexEl)hexEl.value=this.value;
+      applyElementColors();
+    });
+  }
+});
+
+function resetElementColors(){
+  S.elementColors={};
+  document.querySelectorAll('[id^=ce-]').forEach(el=>{
+    if(el.type==='color') el.value=el.defaultValue||'#ffffff';
+    else el.value='';
+  });
+  renderCert();
+  toast('Warna direset ke tema','ok');
+}
+
+/* ══════════════════════════════════════════
+   FONT CONTROLS
+══════════════════════════════════════════ */
+function setFont(target,font,el){
+  pushHistory(`Font ${target}: ${font}`);
+  const grid=el.closest('.font-grid');
+  grid.querySelectorAll('.font-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  if(target==='name'){S.nameFont=font;document.querySelectorAll('.c-name').forEach(n=>n.style.fontFamily=`'${font}',serif`)}
+  else{S.titleFont=font;document.querySelectorAll('.c-type').forEach(n=>n.style.fontFamily=`'${font}',serif`)}
+}
+function updateFontSizes(){
+  S.nameFontSize=parseInt(document.getElementById('sl-name-size').value);
+  S.nameFontWeight=parseInt(v('inp-name-weight'))||400;
+  S.titleFontSize=parseInt(document.getElementById('sl-title-size').value);
+  S.titleLS=parseInt(document.getElementById('sl-title-ls').value)||4;
+  S.bodyFont=v('inp-body-font')||'DM Sans';
+  document.querySelectorAll('.c-name').forEach(n=>{n.style.fontSize=S.nameFontSize+'px';n.style.fontWeight=S.nameFontWeight});
+  document.querySelectorAll('.c-type').forEach(n=>{n.style.fontSize=S.titleFontSize+'px';n.style.letterSpacing=(S.titleLS/10)+'em'});
+  document.querySelectorAll('.c-desc').forEach(n=>n.style.fontFamily=`'${S.bodyFont}',sans-serif`);
+}
+
+/* ══════════════════════════════════════════
+   BACKGROUND CONTROLS
+══════════════════════════════════════════ */
+function syncBgColor(){
+  const val=document.getElementById('bg-color-pk').value;
+  S.bgColor=val;
+  document.getElementById('bg-color-hex').value=val;
+  const el=document.getElementById('cert-color-bg');
+  if(el)el.style.backgroundColor=val;
+}
+function syncBgColorFromHex(){
+  const val=document.getElementById('bg-color-hex').value;
+  if(/^#[0-9a-fA-F]{6}$/.test(val)){
+    S.bgColor=val;
+    document.getElementById('bg-color-pk').value=val;
+    const el=document.getElementById('cert-color-bg');
+    if(el)el.style.backgroundColor=val;
+  }
+}
+function updateBgFit(){
+  S.bgFit=document.getElementById('inp-bgfit').value;
+  const el=document.getElementById('cert-bg-img');
+  if(el)el.style.backgroundSize=S.bgFit;
+}
+
+/* ══════════════════════════════════════════
+   SLIDER UTIL
+══════════════════════════════════════════ */
+function updateSlider(slId,lblId,suffix){
+  const sl=document.getElementById(slId);
+  const lbl=document.getElementById(lblId);
+  if(!sl||!lbl)return;
+  lbl.textContent=sl.value+suffix;
+  if(slId==='sl-bg-opacity'){S.bgOpacity=sl.value/100;const e=document.getElementById('cert-bg-img');if(e)e.style.opacity=S.bgOpacity}
+  if(slId==='sl-overlay'){S.overlayOpacity=sl.value/100;const e=document.getElementById('cert-overlay');if(e)e.style.opacity=S.overlayOpacity}
+  if(slId==='sl-blur'){S.bgBlur=parseInt(sl.value);const e=document.getElementById('cert-bg-img');if(e)e.style.filter=`blur(${S.bgBlur}px) brightness(${S.bgBrightness}%)`}
+  if(slId==='sl-brightness'){S.bgBrightness=parseInt(sl.value);const e=document.getElementById('cert-bg-img');if(e)e.style.filter=`blur(${S.bgBlur}px) brightness(${S.bgBrightness}%)`}
+}
+function toggleWmPanel(){
+  const show=checked('opt-watermark');
+  document.getElementById('wm-panel').style.display=show?'flex':'none';
+}
+
+/* ══════════════════════════════════════════
+   FILE UPLOADS
+══════════════════════════════════════════ */
+function handleBgUpload(e){
+  const file=e.target.files[0]; if(!file)return;
+  if(file.size>10*1024*1024){toast('Ukuran max 10MB','err');return}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    S.bgImage=ev.target.result; dbSave('bgImage',S.bgImage);
+    document.getElementById('bg-preview-row').style.display='block';
+    document.getElementById('bg-mini').style.backgroundImage=`url(${S.bgImage})`;
+    document.getElementById('bg-filename').textContent=file.name;
+    document.getElementById('info-bg').textContent='Custom Image';
+    renderCert();
+    toast('Background dimuat','ok');
+  }; reader.readAsDataURL(file);
+}
+function removeBg(){
+  S.bgImage=null;dbDel('bgImage');
+  document.getElementById('bg-preview-row').style.display='none';
+  document.getElementById('bg-inp').value='';
+  document.getElementById('info-bg').textContent='Solid';
+  renderCert();toast('Background dihapus','ok');
+}
+function handleLogoUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    S.logoImage=ev.target.result;dbSave('logoImage',S.logoImage);
+    document.getElementById('logo-preview-row').style.display='block';
+    document.getElementById('logo-mini').style.backgroundImage=`url(${S.logoImage})`;
+    renderCert();toast('Logo terpasang','ok');
+  };reader.readAsDataURL(file);
+}
+function removeLogo(){
+  S.logoImage=null;dbDel('logoImage');
+  document.getElementById('logo-preview-row').style.display='none';
+  document.getElementById('logo-inp').value='';
+  renderCert();toast('Logo dihapus','ok');
+}
+function handleSignUpload(n,e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    S[`sign${n}Image`]=ev.target.result; dbSave(`sign${n}Image`,ev.target.result);
+    document.getElementById(`sign${n}-preview-row`).style.display='block';
+    document.getElementById(`sign${n}-mini`).src=ev.target.result;
+    renderCert();toast(`Tanda tangan ${n} terpasang`,'ok');
+  };reader.readAsDataURL(file);
+}
+function removeSign(n){
+  S[`sign${n}Image`]=null;dbDel(`sign${n}Image`);
+  document.getElementById(`sign${n}-preview-row`).style.display='none';
+  document.getElementById(`sign${n}-inp`).value='';
+  renderCert();toast(`TTD ${n} dihapus`,'ok');
+}
+
+/* ══════════════════════════════════════════
+   FORMAT / ZOOM
+══════════════════════════════════════════ */
+function getFormatDimensions() {
+  const fmt = v('inp-format');
+  const map = { landscape: [860, 608], portrait: [608, 860], square: [720, 720] };
+  return map[fmt] || [860, 608];
+}
+
+function updateFormat(){
+  const [w,h] = getFormatDimensions();
+  const cert=document.getElementById('certificate');
+  cert.style.width=w+'px';cert.style.minHeight=h+'px';
+  document.getElementById('cert-size-lbl').textContent=`${w} × ${h}`;
+  document.getElementById('sb-dim').textContent=`${w} × ${h}px`;
+  document.getElementById('info-format').textContent=document.getElementById('inp-format').options[document.getElementById('inp-format').selectedIndex].text.split(' — ')[0];
+  renderCert();
+}
+function zoom(delta){
+  if(delta===0)S.zoomLevel=75;
+  else S.zoomLevel=Math.max(25,Math.min(150,S.zoomLevel+delta));
+  document.getElementById('zoom-val').textContent=S.zoomLevel+'%';
+  document.getElementById('sb-zoom').textContent='Zoom: '+S.zoomLevel+'%';
+  document.getElementById('cert-stage').style.transform=`scale(${S.zoomLevel/100})`;
+}
+
+/* ══════════════════════════════════════════
+   DRAG AND DROP ENGINE
+══════════════════════════════════════════ */
+function toggleDragMode(){
+  S.dragMode=checked('opt-drag-mode');
+  const elements = document.querySelectorAll('.draggable-element');
+  elements.forEach(el => {
+     el.classList.toggle('drag-active-mode', S.dragMode);
+  });
+  if(S.dragMode){enableDragOnElements();toast('Drag mode aktif — geser komponen di kanvas','info')}
+  else{disableDragOnElements();toast('Drag mode dinonaktifkan','info')}
+}
+function enableDragOnElements(){
+  const cert=document.getElementById('certificate');
+  const draggableIds=['el-org','el-type-wrap','el-name','el-course-wrap','el-desc','el-presented'];
+  draggableIds.forEach(id=>{
+    const el=cert.querySelector('#'+id); if(!el)return;
+    el.addEventListener('mousedown',startDrag);
+  });
+}
+function disableDragOnElements(){
+  const cert=document.getElementById('certificate');
+  const draggableIds=['el-org','el-type-wrap','el-name','el-course-wrap','el-desc','el-presented'];
+  draggableIds.forEach(id=>{
+    const el=cert.querySelector('#'+id); if(!el)return;
+    el.removeEventListener('mousedown',startDrag);
+  });
+}
+let dragging=null,dragOffX=0,dragOffY=0;
+function startDrag(e){
+  if(!S.dragMode)return;
+  e.preventDefault();
+  const el=e.currentTarget;
+  const cert=document.getElementById('certificate');
+  const certRect=cert.getBoundingClientRect();
+  const scale=S.zoomLevel/100;
+  dragging=el;
+  const rect=el.getBoundingClientRect();
+  const relLeft=(rect.left-certRect.left)/scale;
+  const relTop=(rect.top-certRect.top)/scale;
+  el.style.position='absolute';
+  el.style.left=relLeft+'px';
+  el.style.top=relTop+'px';
+  el.style.margin='0';
+  dragOffX=(e.clientX-certRect.left)/scale-relLeft;
+  dragOffY=(e.clientY-certRect.top)/scale-relTop;
+  cert.style.cursor='grabbing';
+}
+document.addEventListener('mousemove',e=>{
+  if(!dragging)return;
+  const cert=document.getElementById('certificate');
+  const certRect=cert.getBoundingClientRect();
+  const scale=S.zoomLevel/100;
+  const x=(e.clientX-certRect.left)/scale-dragOffX;
+  const y=(e.clientY-certRect.top)/scale-dragOffY;
+  dragging.style.left=x+'px';
+  dragging.style.top=y+'px';
+  S.customPositions[dragging.id]={left:x,top:y};
+});
+document.addEventListener('mouseup',()=>{
+  if(dragging){dragging=null;document.getElementById('certificate').style.cursor=''}
+});
+function resetPositions(){
+  S.customPositions={};
+  renderCert();
+  toast('Posisi komponen direset','ok');
+}
+
+/* ══════════════════════════════════════════
+   LAYER MANAGER ENGINE
+══════════════════════════════════════════ */
+const LAYER_META = {
+  'el-org': { name: 'Organisasi / Institusi', icon: '🏢' },
+  'el-type-wrap': { name: 'Judul Dokumen / Sertifikat', icon: '📄' },
+  'el-presented': { name: 'Teks Presentasi', icon: '💬' },
+  'el-name': { name: 'Nama Penerima', icon: '👤' },
+  'el-desc': { name: 'Deskripsi Kelulusan', icon: '📝' },
+  'el-course-wrap': { name: 'Nama Program / Pelatihan', icon: '📚' },
+  'el-footer': { name: 'Blok TTD & Tanggal', icon: '✍' }
+};
+function syncLayersPanel(){
+  const list=document.getElementById('layer-list');
+  if(!list) return;
+  list.innerHTML=Object.keys(LAYER_META).map(id=>{
+    const visible = S.layerVisibility[id]!==false;
+    return `
+      <div class="layer-item">
+        <span class="layer-icon">${LAYER_META[id].icon}</span>
+        <span class="layer-name">${LAYER_META[id].name}</span>
+        <button class="layer-vis" onclick="toggleLayer('${id}')" title="Sembunyikan/Tampilkan">${visible?'👁':'👁‍quorum'}</button>
+      </div>`;
+  }).join('');
+}
+function toggleLayer(id){
+  S.layerVisibility[id] = S.layerVisibility[id]===false?true:false;
+  renderCert(false);
+}
+
+/* ══════════════════════════════════════════
+   AUTO INCREMENT
+══════════════════════════════════════════ */
+function autoIncrementCertNo(){
+  const prefix=v('inp-autonumber-prefix')||'CERT/2026/';
+  const current=v('inp-certno');
+  let num=1;
+  if(current&&current.startsWith(prefix)){
+    const rest=current.replace(prefix,'');
+    const parsed=parseInt(rest);
+    if(!isNaN(parsed))num=parsed+1;
+  }
+  document.getElementById('inp-certno').value=prefix+String(num).padStart(4,'0');
+  liveUpdate();toast('Nomor di-increment','ok');
+}
+
+/* ══════════════════════════════════════════
+   TEMPLATE SAVE/LOAD
+══════════════════════════════════════════ */
+function saveTemplate(){
+  const name=document.getElementById('tpl-name-inp').value.trim();
+  if(!name){toast('Masukkan nama template','err');return}
+  const templates=loadTemplatesFromStorage();
+  templates[name]={created:Date.now(),state:getFormSnapshot(),S_sub:{theme:S.theme,bgColor:S.bgColor,nameFont:S.nameFont,titleFont:S.titleFont,nameFontSize:S.nameFontSize,titleFontSize:S.titleFontSize,overlayOpacity:S.overlayOpacity,layerVisibility:S.layerVisibility,customPositions:S.customPositions}};
+  localStorage.setItem('certv3_templates',JSON.stringify(templates));
+  document.getElementById('tpl-name-inp').value='';
+  buildTemplateList();
+  toast(`Template "${name}" tersimpan`,'ok');
+}
+function loadTemplatesFromStorage(){
+  try{return JSON.parse(localStorage.getItem('certv3_templates')||'{}')}catch{return{}}
+}
+function buildTemplateList(){
+  const list=document.getElementById('tpl-list');
+  const templates=loadTemplatesFromStorage();
+  const keys=Object.keys(templates);
+  if(!keys.length){list.innerHTML=`<div style="font-size:10.5px;color:var(--text2);text-align:center;padding:12px">Belum ada template tersimpan</div>`;return}
+  list.innerHTML=keys.map(name=>`
+    <div class="tpl-item" onclick="loadTemplate('${name}')">
+      <div class="tpl-item-name">${name}</div>
+      <div class="tpl-item-date">${new Date(templates[name].created).toLocaleDateString('id-ID')}</div>
+      <button class="tpl-item-del" onclick="event.stopPropagation();deleteTemplate('${name}')">×</button>
+    </div>`).join('');
+}
+function loadTemplate(name){
+  const templates=loadTemplatesFromStorage();
+  const tpl=templates[name];if(!tpl)return;
+  pushHistory(`Load: ${name}`);
+  restoreSnapshot(tpl.state);
+  if(tpl.S_sub) {
+    Object.assign(S,tpl.S_sub);
+    if(tpl.S_sub.layerVisibility) S.layerVisibility = tpl.S_sub.layerVisibility;
+    if(tpl.S_sub.customPositions) S.customPositions = tpl.S_sub.customPositions;
+  }
+  renderCert();
+  toast(`Template "${name}" dimuat`,'ok');
+}
+function deleteTemplate(name){
+  const templates=loadTemplatesFromStorage();
+  delete templates[name];
+  localStorage.setItem('certv3_templates',JSON.stringify(templates));
+  buildTemplateList();
+  toast(`Template "${name}" dihapus`,'ok');
+}
+
+/* ══════════════════════════════════════════
+   BULK CSV PROCESSING
+══════════════════════════════════════════ */
+function handleCSVUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  Papa.parse(file,{
+    header:true,skipEmptyLines:true,
+    complete(results){
+      S.bulkData=results.data.filter(r=>r.name||r.nama);
+      if(!S.bulkData.length){toast('CSV kosong atau format salah','err');return}
+      const statusEl=document.getElementById('bulk-status');
+      const tableWrap=document.getElementById('bulk-table-wrap');
+      const genBtn=document.getElementById('bulk-gen-btn');
+      statusEl.style.display='block';
+      statusEl.innerHTML=`✓ <strong>${S.bulkData.length} data</strong> siap diproses`;
+      const preview=S.bulkData.slice(0,5);
+      const headers=Object.keys(results.data[0]);
+      tableWrap.style.display='block';
+      tableWrap.innerHTML=`<table class="bulk-preview-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${preview.map(r=>`<tr>${headers.map(h=>`<td>${r[h]||''}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+      genBtn.style.display='block';
+      document.getElementById('sb-bulk').textContent=`Bulk: ${S.bulkData.length} data`;
+      toast(`${S.bulkData.length} baris CSV dimuat`,'ok');
+    },
+    error(){toast('Gagal memproses berkas CSV','err')}
+  });
+}
+
+async function generateBulk(){
+  if(!S.bulkData.length){toast('Tidak ada data CSV','err');return}
+  const format=v('bulk-format')||'png';
+  const scale=parseInt(document.getElementById('sl-bulk-scale').value)||2;
+  const autoNo=checked('bulk-auto-no');
+  const prefix=v('inp-autonumber-prefix')||'CERT/2026/';
+  const zip=new JSZip();
+  const cert=document.getElementById('certificate');
+  const progressWrap=document.getElementById('bulk-progress-wrap');
+  const progressBar=document.getElementById('bulk-progress-bar');
+  const progressText=document.getElementById('bulk-progress-text');
+  progressWrap.style.display='block';
+  document.getElementById('bulk-gen-btn').disabled=true;
+
+  const originalName=v('inp-name');
+  const originalCourse=v('inp-course');
+  const originalDate=v('inp-date');
+  const originalCertNo=v('inp-certno');
+
+  // Redam skala transform preview ke normal (1) agar rendering 1:1 sempurna
+  const originalTransform = document.getElementById('cert-stage').style.transform;
+  document.getElementById('cert-stage').style.transform = 'scale(1)';
+  const [targetWidth, targetHeight] = getFormatDimensions();
+
+  for(let i=0;i<S.bulkData.length;i++){
+    const row=S.bulkData[i];
+    const name=row.name||row.nama||'Unnamed';
+    const course=row.course||row.program||row.kelas||originalCourse;
+    const date=row.date||row.tanggal||originalDate;
+    const certNo=autoNo?`${prefix}${String(i+1).padStart(4,'0')}`:(row.certno||row.nomor||originalCertNo);
+
+    document.getElementById('inp-name').value=name;
+    document.getElementById('inp-course').value=course;
+    document.getElementById('inp-date').value=date;
+    document.getElementById('inp-certno').value=certNo;
+
+    await renderCert(true);
+    await new Promise(r=>setTimeout(r,150));
+
+    try{
+      const opts={
+        scale: scale,
+        useCORS: true,
+        allowTaint: true,
+        width: targetWidth,
+        height: targetHeight,
+        backgroundColor: format === 'jpg' ? '#ffffff' : null
+      };
+      
+      const resCanvas = await html2canvas(cert, opts);
+      let blob;
+      const slug=name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+      
+      if(format==='jpg'){
+        const dataUrl=resCanvas.toDataURL('image/jpeg', 0.94);
+        blob=dataURLToBlob(dataUrl);
+        zip.file(`cert-${i+1}-${slug}.jpg`,blob);
+      }else if(format==='pdf'){
+        const dataUrl=resCanvas.toDataURL('image/png');
+        const{jsPDF}=window.jspdf;
+        const pdf=new jsPDF({orientation:targetWidth>targetHeight?'l':'p',unit:'mm',format:targetWidth===targetHeight?[210,210]:'a4'});
+        pdf.addImage(dataUrl,'PNG',0,0,targetWidth>targetHeight?297:210,targetWidth>targetHeight?210:297,undefined,'FAST');
+        const pdfData=pdf.output('arraybuffer');
+        zip.file(`cert-${i+1}-${slug}.pdf`,pdfData);
+      }else{
+        const dataUrl=resCanvas.toDataURL('image/png');
+        blob=dataURLToBlob(dataUrl);
+        zip.file(`cert-${i+1}-${slug}.png`,blob);
+      }
+    }catch(err){console.error('Error rendering row: ',i,err)}
+
+    const pct=Math.round((i+1)/S.bulkData.length*100);
+    progressBar.style.width=pct+'%';
+    progressText.textContent=`Memproses ${i+1}/${S.bulkData.length} (${pct}%)`;
+  }
+
+  // Kembalikan skala preview asal
+  document.getElementById('cert-stage').style.transform = originalTransform;
+
+  document.getElementById('inp-name').value=originalName;
+  document.getElementById('inp-course').value=originalCourse;
+  document.getElementById('inp-date').value=originalDate;
+  document.getElementById('inp-certno').value=originalCertNo;
+  renderCert();
+
+  const zipBlob=await zip.generateAsync({type:'blob'});
+  const link=document.createElement('a');
+  link.href=URL.createObjectURL(zipBlob);
+  link.download=`certifypro-bulk-export.zip`;
+  link.click();
+  progressWrap.style.display='none';
+  document.getElementById('bulk-gen-btn').disabled=false;
+  toast(`✓ ${S.bulkData.length} file sertifikat di-ZIP`,'ok');
+}
+
+function dataURLToBlob(dataURL){
+  const arr=dataURL.split(','),mime=arr[0].match(/:(.*?);/)[1];
+  const bstr=atob(arr[1]); let n=bstr.length; const u8=new Uint8Array(n);
+  while(n--) u8[n]=bstr.charCodeAt(n);
+  return new Blob([u8],{type:mime});
+}
+
+function downloadSampleCSV(){
+  const sample=`name,course,date,certno\nAhmad Fauzi Pratama,Digital Marketing Mastery,2026-05-20,CERT/2026/0001\nSiti Rahayu,Data Analytics Bootcamp,2026-05-21,CERT/2026/0002\nBudi Santoso,UI/UX Design Sprint,2026-05-22,CERT/2026/0003`;
+  const blob=new Blob([sample],{type:'text/csv'});
+  const link=document.createElement('a');
+  link.href=URL.createObjectURL(blob);
+  link.download='sample-certifypro.csv';
+  link.click();
+  toast('Sample CSV diunduh','ok');
+}
+
+/* ══════════════════════════════════════════
+   AI TEXT GENERATOR
+══════════════════════════════════════════ */
+function runAIGenerate(){
+  const name=v('inp-name');
+  const course=v('inp-course');
+  const org=v('inp-org');
+  const tone=v('ai-tone');
+  const target=v('ai-target');
+  
+  const thinkingEl=document.getElementById('ai-thinking');
+  const resultEl=document.getElementById('ai-result');
+  const applyBtn=document.getElementById('ai-apply-btn');
+  
+  thinkingEl.style.display='flex';
+  resultEl.textContent='Memproses teks...';
+  applyBtn.style.display='none';
+
+  setTimeout(() => {
+    let outputText = '';
+    if(target === 'desc') {
+      if(tone === 'formal') outputText = `Atas kontribusi luar biasa dan penyelesaian sukses seluruh modul kompetensi program ${course} yang diselenggarakan oleh ${org}.`;
+      else if(tone === 'inspiring') outputText = `Telah membuktikan dedikasi tinggi, semangat belajar tanpa batas, dan pencapaian luar biasa dalam menguasai keahlian ${course} bersama ${org}.`;
+      else if(tone === 'academic') outputText = `Memenuhi seluruh persyaratan akademis dan evaluasi kompetensi pada program studi intensif ${course} yang terdaftar pada ${org}.`;
+      else outputText = `Selamat atas kelulusannya di program ${course}! Terus berkarya menciptakan inovasi masa depan yang membanggakan bersama ${org}.`;
+    } else {
+      outputText = `${org} Academy\nLembaga Sertifikasi Inovasi ${course}\nInstitute of Corporate Digital Talent`;
+    }
+    
+    S.aiResult = outputText;
+    resultEl.textContent = outputText;
+    thinkingEl.style.display = 'none';
+    applyBtn.style.display = 'block';
+    toast('Teks konseptual berhasil disusun','ok');
+  }, 600);
+}
+
+function applyAIResult(){
+  if(!S.aiResult)return;
+  const target=v('ai-target');
+  if(target==='desc'){
+    document.getElementById('inp-desc').value=S.aiResult;
+  }else if(target==='org'){
+    const firstLine=S.aiResult.split('\n')[0].trim();
+    document.getElementById('inp-org').value=firstLine;
+  }
+  pushHistory('Penerapan AI');
+  renderCert();
+  toast('Teks AI diterapkan','ok');
+}
+
+/* ══════════════════════════════════════════
+   EXPORT HANDLING (FIXED HIGH RESOLUTION RENDERING)
+══════════════════════════════════════════ */
+async function exportAs(format){
+  const cert=document.getElementById('certificate');
+  if(!cert.innerHTML){toast('Buat sertifikat dulu','err');return}
+  showLoading('Mengekspor Berkas...','Sedang merender resolusi tinggi.');
+  await new Promise(r=>setTimeout(r,300));
+  
+  try{
+    const scale=parseInt(document.getElementById('sl-export-scale').value)||2;
+    const [targetWidth, targetHeight] = getFormatDimensions();
+    
+    // Matikan sementara skala preview agar tidak mendistorsi matriks html2canvas
+    const originalTransform = document.getElementById('cert-stage').style.transform;
+    document.getElementById('cert-stage').style.transform = 'scale(1)';
+
+    const opts={
+      scale: scale,
+      useCORS: true,
+      allowTaint: true,
+      width: targetWidth,
+      height: targetHeight,
+      backgroundColor: format === 'jpg' ? '#ffffff' : null
+    };
+    
+    const exportCanvas = await html2canvas(cert, opts);
+    
+    // Kembalikan posisi skala pratinjau monitor
+    document.getElementById('cert-stage').style.transform = originalTransform;
+    
+    const slug=(v('inp-name')||'cert').toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+    
+    if(format==='pdf'){
+      const dataUrl=exportCanvas.toDataURL('image/png');
+      const{jsPDF}=window.jspdf;
+      const pdf=new jsPDF({orientation:targetWidth>targetHeight?'l':'p',unit:'mm',format:targetWidth===targetHeight?[210,210]:'a4'});
+      pdf.addImage(dataUrl,'PNG',0,0,targetWidth>targetHeight?297:210,targetWidth>targetHeight?210:297,undefined,'FAST');
+      pdf.save(`certifypro-${slug}-${S.theme}.pdf`);
+    }else if(format==='jpg'){
+      const dataUrl=exportCanvas.toDataURL('image/jpeg', 0.95);
+      dl(dataUrl,`certifypro-${slug}.jpg`);
+    }else{
+      const dataUrl=exportCanvas.toDataURL('image/png');
+      dl(dataUrl,`certifypro-${slug}.png`);
+    }
+    toast(`Ekspor ${format.toUpperCase()} berhasil!`,'ok');
+  }catch(e){
+    toast('Gagal ekspor: '+e.message,'err');
+    console.error(e);
+  }finally{
+    hideLoading();
+  }
+}
+function dl(url,name){const a=document.createElement('a');a.href=url;a.download=name;a.click()}
+function showLoading(title,sub=''){
+  document.getElementById('loading-title').textContent=title;
+  document.getElementById('loading-sub').textContent=sub;
+  document.getElementById('loading-overlay').classList.add('show');
+}
+function hideLoading(){document.getElementById('loading-overlay').classList.remove('show')}
+
+/* ══════════════════════════════════════════
+   TOAST SYSTEM
+══════════════════════════════════════════ */
+function toast(msg,type='ok'){
+  const t=document.getElementById('toast');
+  const ico=document.getElementById('toast-ico');
+  document.getElementById('toast-msg').textContent=msg;
+  ico.className='toast-ico '+(type==='err'?'err':type==='info'?'info':'ok');
+  ico.textContent=type==='err'?'✗':type==='info'?'ℹ':'✓';
+  t.classList.add('show');
+  clearTimeout(t._tid);
+  t._tid=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+/* ══════════════════════════════════════════
+   RESET STUDIO
+══════════════════════════════════════════ */
+function resetAll(){
+  if(!confirm('Reset seluruh konfigurasi studio ke setelan awal?'))return;
+  localStorage.removeItem('certv3_draft');
+  if(DB){const tx=DB.transaction('assets','readwrite');tx.objectStore('assets').clear()}
+  location.reload();
+}
+
+/* ══════════════════════════════════════════
+   DRAG DROP INSTANTIATION
+══════════════════════════════════════════ */
+function setupDropZone(){
+  const zone=document.getElementById('drop-zone'); if(!zone)return;
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.style.borderColor='var(--text)'});
+  zone.addEventListener('dragleave',()=>zone.style.borderColor='');
+  zone.addEventListener('drop',e=>{
+    e.preventDefault();zone.style.borderColor='';
+    const file=e.dataTransfer.files[0];
+    if(file&&file.type.startsWith('image/'))handleBgUpload({target:{files:[file]}});
+  });
+}
+
+/* ══════════════════════════════════════════
+   STATE STORAGE SYNCHRONIZATION
+══════════════════════════════════════════ */
+function saveDraft(){
+  const fields=['inp-name','inp-certtype','inp-certtype-custom','inp-course','inp-desc','inp-presented','inp-org','inp-date','inp-certno','inp-s1n','inp-s1t','inp-s2n','inp-s2t','inp-seal','inp-qr-url','inp-wm-text','inp-autonumber-prefix'];
+  const data={
+    fields:{},
+    S:{theme:S.theme,bgColor:S.bgColor,nameFont:S.nameFont,titleFont:S.titleFont,bodyFont:S.bodyFont,nameFontSize:S.nameFontSize,titleFontSize:S.titleFontSize,titleLS:S.titleLS,nameFontWeight:S.nameFontWeight,overlayOpacity:S.overlayOpacity,bgBlur:S.bgBlur,bgBrightness:S.bgBrightness,bgFit:S.bgFit, layerVisibility: S.layerVisibility, customPositions:S.customPositions},
+    checkboxes:['opt-show-desc','opt-show-no','opt-show-seal','opt-show-rule','opt-show-divider','opt-border','opt-corners','opt-inner-border','opt-accent-bar','opt-svg-ornament','opt-qr','opt-watermark','bulk-auto-no'].reduce((a,id)=>{const el=document.getElementById(id);if(el)a[id]=el.checked;return a},{}),
+    selects:['inp-format','inp-layout','inp-numsign','inp-certtype','ai-tone','ai-target','inp-qr-size','inp-qr-pos','inp-wm-pattern','inp-bgfit','inp-name-weight','inp-body-font','inp-ornament-style'].reduce((a,id)=>{const el=document.getElementById(id);if(el)a[id]=el.value;return a},{}),
+    sliders:['sl-bg-opacity','sl-overlay','sl-blur','sl-brightness','sl-name-size','sl-title-size','sl-title-ls','sl-wm-opacity','sl-export-scale','sl-bulk-scale'].reduce((a,id)=>{const el=document.getElementById(id);if(el)a[id]=el.value;return a},{})
+  };
+  fields.forEach(id=>{const el=document.getElementById(id);if(el)data.fields[id]=el.value});
+  localStorage.setItem('certv3_draft',JSON.stringify(data));
+}
+
+function loadDraft(){
+  try{
+    const raw=localStorage.getItem('certv3_draft');if(!raw)return;
+    const data=JSON.parse(raw);
+    if(data.fields)Object.keys(data.fields).forEach(id=>{const el=document.getElementById(id);if(el)el.value=data.fields[id]});
+    if(data.S) {
+      Object.assign(S,data.S);
+      if(data.S.layerVisibility) S.layerVisibility = data.S.layerVisibility;
+      if(data.S.customPositions) S.customPositions = data.S.customPositions;
+    }
+    if(data.checkboxes)Object.keys(data.checkboxes).forEach(id=>{const el=document.getElementById(id);if(el)el.checked=data.checkboxes[id]});
+    if(data.selects)Object.keys(data.selects).forEach(id=>{const el=document.getElementById(id);if(el)el.value=data.selects[id]});
+    if(data.sliders)Object.keys(data.sliders).forEach(id=>{
+      const el=document.getElementById(id);if(!el)return;
+      el.value=data.sliders[id];
+      const map={'sl-bg-opacity':'sl-bg-opacity-v','sl-overlay':'sl-overlay-v','sl-blur':'sl-blur-v','sl-brightness':'sl-brightness-v','sl-name-size':'sl-name-size-v','sl-title-size':'sl-title-size-v','sl-title-ls':'sl-title-ls-v','sl-wm-opacity':'sl-wm-v','sl-export-scale':'sl-export-scale-v','sl-bulk-scale':'sl-bulk-scale-v'};
+      const sfxMap={'sl-bg-opacity':'%','sl-overlay':'%','sl-blur':'px','sl-brightness':'%','sl-name-size':'px','sl-title-size':'px','sl-title-ls':'%','sl-wm-opacity':'%','sl-export-scale':'x','sl-bulk-scale':'x'};
+      const lblId=map[id]; if(lblId){const lbl=document.getElementById(lblId);if(lbl)lbl.textContent=el.value+(sfxMap[id]||'')}
+    });
+    
+    const bgPk=document.getElementById('bg-color-pk');
+    const bgHex=document.getElementById('bg-color-hex');
+    if(bgPk)bgPk.value=S.bgColor; if(bgHex)bgHex.value=S.bgColor;
+    
+    document.querySelectorAll('.theme-card').forEach(c=>c.classList.toggle('active',c.dataset.theme===S.theme));
+    const meta=THEMES.find(t=>t.id===S.theme);
+    if(meta){document.getElementById('info-theme').textContent=meta.name;document.getElementById('sb-theme').textContent='Tema: '+meta.name}
+    
+    document.querySelectorAll('#name-font-grid .font-btn').forEach(b=>{
+      const fn=b.getAttribute('onclick').match(/'([^']+)'/)?.[1];
+      b.classList.toggle('active',fn===S.nameFont);
+    });
+    document.querySelectorAll('#title-font-grid .font-btn').forEach(b=>{
+      const fn=b.getAttribute('onclick').match(/'([^']+)'/)?.[1];
+      b.classList.toggle('active',fn===S.titleFont);
+    });
+    
+    if(document.getElementById('inp-certtype').value==='custom')document.getElementById('custom-certtype-field').style.display='block';
+    toggleWmPanel();
+    document.getElementById('sign2-section').style.display=parseInt(v('inp-numsign'))===1?'none':'block';
+  }catch(e){console.error('Draft load structural error',e)}
+}
+
+/* ══════════════════════════════════════════
+   SHORTCUT ENGINE
+══════════════════════════════════════════ */
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
+  if(e.ctrlKey||e.metaKey){
+    if(e.key==='z'){e.preventDefault();undo()}
+    if(e.key==='y'){e.preventDefault();redo()}
+    if(e.key==='s'){e.preventDefault();const name=prompt('Nama template:');if(name){document.getElementById('tpl-name-inp').value=name;saveTemplate()}}
+    if(e.key==='e'){e.preventDefault();exportAs('png')}
+  }
+  if(e.key==='='||e.key==='+')zoom(10);
+  if(e.key==='-')zoom(-10);
+});
+
+document.addEventListener('input',()=>{saveDraft(); syncLayersPanel()});
+document.addEventListener('change',()=>{saveDraft(); syncLayersPanel()});
+
+/* ══════════════════════════════════════════
+   BOOT ENGINE ENTRY
+══════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded',()=>{
+  if(!document.getElementById('inp-date').value) document.getElementById('inp-date').value=new Date().toISOString().split('T')[0];
+  buildThemeGrid();
+  buildTemplateList();
+  setupDropZone();
+
+  initDB(()=>{
+    loadDraft();
+    dbLoad('bgImage',bg=>{
+      if(bg){
+        S.bgImage=bg;
+        document.getElementById('bg-preview-row').style.display='block';
+        document.getElementById('bg-mini').style.backgroundImage=`url(${bg})`;
+        document.getElementById('bg-filename').textContent='Gambar latar aktif';
+        document.getElementById('info-bg').textContent='Custom Image';
+      }
+      dbLoad('logoImage',logo=>{
+        if(logo){
+          S.logoImage=logo;
+          document.getElementById('logo-preview-row').style.display='block';
+          document.getElementById('logo-mini').style.backgroundImage=`url(${logo})`;
+        }
+        dbLoad('sign1Image',s1=>{
+          if(s1){
+            S.sign1Image=s1;
+            document.getElementById('sign1-preview-row').style.display='block';
+            document.getElementById('sign1-mini').src=s1;
+          }
+          dbLoad('sign2Image',s2=>{
+            if(s2){
+              S.sign2Image=s2;
+              document.getElementById('sign2-preview-row').style.display='block';
+              document.getElementById('sign2-mini').src=s2;
+            }
+            renderCert(true);
+            pushHistory('Studio Siap');
+          });
+        });
+      });
+    });
+  });
+});
+</script>
+</body>
+</html>
